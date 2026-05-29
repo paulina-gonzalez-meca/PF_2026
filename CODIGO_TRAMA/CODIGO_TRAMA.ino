@@ -26,6 +26,7 @@ void setup() {
 void loop() {
   if (Serial.available() > 0) {
     dato = Serial.readString();  // Ingresamos variables
+    dato.trim();
     
     if (i < MAX_LISTA) {
       listaDatos[i] = dato;
