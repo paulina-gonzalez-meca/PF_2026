@@ -1,23 +1,33 @@
+#include <vector> // para usar vectores
+
 #define MAX_LISTA 6
 #define CANT_DISPOSITIVOS 3
 #define CANT_SENSORES 3
 
-String dato;
+struct Sensor { // Struct nos permite "crear" una plantilla para registrar cierto tipo de dato
+  String nombre;
+  float valor;
+  int pin;
+};
+
+// Definicion de clase
+class dispositivo {
+  private:
+  String apodo;
+  std::vector<Sensor> sensores;
+
+  public:
+  dispositivo(String nombre) {
+    apodo = nombre;
+  }
+}
+
+
 String listaDatos[MAX_LISTA];
 String tramaFinal;
 
 int i = 0;
 
-String apodosDisp[] = {
-  "P1",
-  "P2",
-  "P3",
-};
-String apodosSensores[] = {
-  "S1",
-  "S2",
-  "S3",
-};
 
 void setup() {
   Serial.begin(115200);
