@@ -5,15 +5,15 @@
 
 class dispositivo {
   private:
-    String apodoDispositivo, apodoSensor1, apodoSensor2, apodoSensor3;
+    String apodoDispositivo, apodoSensor1, apodoSensor2, apodoSensor3, comando;
     String resultadoSensor1, resultadoSensor2, resultadoSensor3;
-    bool emergencia;
+    String emergencia; // se modificó a que emergencia sea un String
 
   public:
-    dispositivo(String disp, bool emg, String sen1, String sen2, String sen3, String res1, String res2, String res3);
-
+    dispositivo(String cmd, String disp, String emg, String sen1, String sen2, String sen3, String res1, String res2, String res3);
+    String getComando() const { return comando; }
     String getApodoDispositivo() const { return apodoDispositivo; }
-    bool getEmergencia() const { return emergencia; }
+    String getEmergencia() const { return emergencia; } 
     String getApodoSensor1() const { return apodoSensor1; }
     String getApodoSensor2() const { return apodoSensor2; }
     String getApodoSensor3() const { return apodoSensor3; }
