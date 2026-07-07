@@ -1,5 +1,5 @@
 // Archivo de encabezado para la clase de datos del periférico
-// Esta clase podrá guardar: emergencia, apodo del periférico y los resultados de los sensores
+// Esta clase podrá guardar todo lo que sea lecturas del periférico: emergencias, luz y resultados de los sensores.
 
 #ifndef DATOSPER_H
 #define DATOSPER_H
@@ -8,24 +8,24 @@
 
 class datosPer {
 private:
-  String emergencia, apodoPeriferico, sensor1, sensor2, sensor3;
+  int emergencia, estadoLuz, sensor1, sensor2, sensor3;
 
 public:
-  datosPer(String emg, String periferico, String sen1, String sen2, String sen3);
+  datosPer(int emg, int luz, int sen1, int sen2, int sen3);
 
-  String getEmergencia() const {
+  int getEmergencia() const {
     return emergencia;
   }
-  String getApodoPeriferico() const {
-    return apodoPeriferico;
+  int getLuz() const {
+    return estadoLuz;
   }
-  String getSensor1() const {
+  int getSensor1() const {
     return sensor1;
   }
-  String getSensor2() const {
+  int getSensor2() const {
     return sensor2;
   }
-  String getSensor3() const {
+  int getSensor3() const {
     return sensor3;
   }
 };

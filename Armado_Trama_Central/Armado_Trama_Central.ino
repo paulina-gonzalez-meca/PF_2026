@@ -32,7 +32,7 @@ ESTADOSARMADO_t estadoArmado = DISPOSITIVO;
 
 // LISTAS DE DATOS (APODOS) (Después estarán en la base de datos)
 std::vector<String> listaApodosDispositivos = { "A", "B", "C" };                        // Lista de apodos de periféricos/dispositivos
-std::vector<String> listaApodosSensores = { "1A", "1B", "1C", "2A", "2B", "3A", "-" };  // Lista de apodos de sensores
+std::vector<String> listaModosSensores = { "L", "-" };  // Lista de modo para lectura sensores. "L" corresponde a que habrá lectura, mientras que "-" indica que no habrá lectura/no hay sensor presente en ese lugar
 
 
 void setup() {
@@ -40,9 +40,9 @@ void setup() {
 
 
   // Casos de tramas (No deberían devolver error)
-  filaDispositivos.push_back(dispositivo("A", "1A", "1B", "1C"));  
-  filaDispositivos.push_back(dispositivo("A", "1A", "1B", "1C"));  
-  filaDispositivos.push_back(dispositivo("B", "2A", "2B", "-"));  
+  filaDispositivos.push_back(dispositivo("A", "L", "L", "L"));  
+  filaDispositivos.push_back(dispositivo("A", "L", "L", "-"));  
+  filaDispositivos.push_back(dispositivo("B", "L", "-", "-"));  
   filaDispositivos.push_back(dispositivo("C", "-", "-", "-"));  
 }
 
@@ -106,7 +106,7 @@ protocolo armarTrama(std::vector<dispositivo>& fila) {
 
     case SENSOR1:
 
-      if (std::find(listaApodosSensores.begin(), listaApodosSensores.end(), filaDispositivos.front().getSensor1()) != listaApodosSensores.end()) {
+      if (std::find(listaModosSensores.begin(), listaModosSensores.end(), filaDispositivos.front().getSensor1()) != listaModosSensores.end()) {
         // Si el segundo valor del objeto corresponde al nombre de un sensor existente, lo guardamos en nuestra trama.
         tramaActual += "#" + filaDispositivos.front().getSensor1() + ",";
         estadoArmado = SENSOR2;
@@ -122,7 +122,7 @@ protocolo armarTrama(std::vector<dispositivo>& fila) {
 
     case SENSOR2:
 
-      if (std::find(listaApodosSensores.begin(), listaApodosSensores.end(), filaDispositivos.front().getSensor2()) != listaApodosSensores.end()) {
+      if (std::find(listaModosSensores.begin(), listaModosSensores.end(), filaDispositivos.front().getSensor2()) != listaModosSensores.end()) {
         tramaActual += filaDispositivos.front().getSensor2() + ",";
         estadoArmado = SENSOR3;
       } else {
@@ -136,7 +136,7 @@ protocolo armarTrama(std::vector<dispositivo>& fila) {
       break;
 
     case SENSOR3:
-      if (std::find(listaApodosSensores.begin(), listaApodosSensores.end(), filaDispositivos.front().getSensor3()) != listaApodosSensores.end()) {
+      if (std::find(listaModosSensores.begin(), listaModosSensores.end(), filaDispositivos.front().getSensor3()) != listaModosSensores.end()) {
         tramaActual += filaDispositivos.front().getSensor3() + ",";
         estadoArmado = ARMADO_ENVIADO;
       } else {
