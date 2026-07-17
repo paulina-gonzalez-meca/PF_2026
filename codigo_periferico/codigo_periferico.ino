@@ -188,7 +188,6 @@ void loop() {
           respuesta[1] = 'L';
           respuesta[2] = 'L';
           leer = 0;
-          emergencia = 0;
           tiempoLectura = 0;
           switchLecturas = 0;
         break;
