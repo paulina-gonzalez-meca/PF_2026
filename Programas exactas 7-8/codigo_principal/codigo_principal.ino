@@ -3,16 +3,22 @@
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
+#include "BluetoothSerial.h"
 
 #define TIEMPO_ENVIAR_NRF 5000
 #define TIEMPO_ENVIAR_SMS 5000
 #define TIEMPO_ENERGIA_PERIFERICOS 100000
+#define TIEMPO_LED 100
 #define PIN_ENERGIA 2
-#define PIN_CE 4
-#define PIN_CSN 5
+#define PIN_PULSADOR 32
+#define PIN_CE 21
+#define PIN_CSN 22
+#define PIN_LED1 12
+#define PIN_LED2 14
 
 
 HardwareSerial sim800l(2);
+BluetoothSerial SerialBT;
 
 class per{
   public:
@@ -47,11 +53,15 @@ RF24 radio(PIN_CE, PIN_CSN);
 char mensajeRecibidoNRF[32];
 bool flagCorte = 1;
 bool respuestaNRF = 0;
+bool flagMensajePulsador = 0;
 int cicloNRF = 0;
 int tiempoDelay = 0;
 int timerSMS = 0;
 int timerNRF = 0;
 int timerEng = 0;
+int tiempoLed1 = 0;
+int tiempoLed2 = 0;
+int tiempoPulsador = 0;
 int indiceNum = 0;
 int indiceEng = 0;
 String trama = "";
@@ -98,6 +108,13 @@ hw_timer_t *timer = NULL; //timer
 void IRAM_ATTR onTimer(); //function interrupts every 1ms
 
 void setup() {
+  pinMode(PIN_LED1, OUTPUT);
+  pinMode(PIN_LED2, OUTPUT);
+
+  digitalWrite(PIN_LED1, HIGH);
+  digitalWrite(PIN_LED2, HIGH);
+
+  SerialBT.begin("pruebaESP32_central");
   Serial.begin(9600);
   
   sim800l.begin(9600, SERIAL_8N1, 16, 17);
@@ -128,10 +145,11 @@ void setup() {
   perifericos.push_back(per("perif2", "lab", "sensor temperatura freezer 2", "-", "-", 1, 1, 0xE2));
   perifericos.push_back(per("perif3", "a", "-", "-", "-", 1, 1, 0xE3));
   numeros.push_back("+5491161386381");
-  numeros.push_back("+5491163710617");
-  numeros.push_back("+5491123692363");
+  //numeros.push_back("+5491163710617");
+  //numeros.push_back("+5491123692363");
 
   pinMode(PIN_ENERGIA, INPUT);
+  pinMode(PIN_PULSADOR, INPUT);
   radio.begin();
   radio.openReadingPipe(1, direccionCentral);
   radio.setPALevel(RF24_PA_MAX);
@@ -144,11 +162,31 @@ void setup() {
   timerAttachInterrupt(timer, &onTimer);
   timerAlarm(timer, 1000, true, 0); // tick every 1ms
 
-  
-
+  digitalWrite(PIN_LED1, LOW);
+  digitalWrite(PIN_LED2, LOW);
 }
 
 void loop() {
+  if(tiempoLed1 >= TIEMPO_LED){
+    digitalWrite(PIN_LED1, LOW);
+  }
+  if(tiempoLed2 >= TIEMPO_LED){
+    digitalWrite(PIN_LED2, LOW);
+  }
+  if(digitalRead(PIN_PULSADOR) == 0 && flagMensajePulsador == 0){
+    flagMensajePulsador = 1;
+    tiempoPulsador = 0;
+  }
+  if(flagMensajePulsador){
+    if(digitalRead(PIN_PULSADOR) && tiempoPulsador <= 1000){
+      mensajesNRF.push_back("probando NRF");
+      flagMensajePulsador = 0;
+    }
+    else if(digitalRead(PIN_PULSADOR) && tiempoPulsador > 1000){
+      mensajesSMS.push_back("probando SMS");
+      flagMensajePulsador = 0;
+    }
+  }
   while (Serial.available() > 0) {
     char c = Serial.read();
     
@@ -219,12 +257,16 @@ void loop() {
     }
   }
   recibirNRF();
+  recibirSMS();
   decodificador();
   perifericosEnergia();
 }
 
 
 void IRAM_ATTR onTimer() {
+  tiempoLed1 += 1;
+  tiempoLed2 += 1;
+  tiempoPulsador += 1;
   tiempoDelay += 1;
   timerSMS += 1;
   timerEng += 1;

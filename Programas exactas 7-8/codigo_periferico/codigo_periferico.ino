@@ -5,19 +5,25 @@
 #include <RF24.h>
 #include "DHT.h"
 #include "datosPer.h"
+#include "BluetoothSerial.h"
 
 // incluir constantes
 #define ERROR "%"
+
 #define TIEMPO_ENVIAR_NRF 5000
 #define TIEMPO_LECTURA 50000
 #define TIEMPO_ENERGIA_PERIFERICOS 100000
+#define TIEMPO_PUERTA 20000
+#define TIEMPO_LED 100
+
 #define PIN_ENERGIA 0
 #define PIN_CE 10
 #define PIN_CSN 5
-#define PIN_S1 20
+#define PIN_S1 1
 #define PIN_LED 21
-#define TIEMPO_PUERTA 20000
-#define TIEMPO_LED 100
+#define PIN_PULSADOR 20
+
+BluetoothSerial SerialBT;
 
 class per{
   public:
@@ -66,6 +72,7 @@ bool flagMandarNRF = 0;
 bool flagSensor1 = 0;
 bool flagSensor2 = 0;
 bool flagSensor3 = 0;
+bool flagPulsador = 0;
 char respuesta[3] = {'L', 'L', 'L'};
 float lecturaS1 = 0;
 float lecturaS2 = 0;
@@ -113,13 +120,16 @@ void switchS2();
 void switchS3();
 
 void setup() {
+  pinMode(PIN_LED, OUTPUT);
+  digitalWrite(PIN_LED, HIGH);
+
+  SerialBT.begin("pruebaESP32_per");
   Serial.begin(115200);
   delay(2000);
   Serial.println("trama: #ApodoDisp,ResSens1,ResSens2,ResSens3*");
 
   pinMode(PIN_ENERGIA, INPUT);
-  pinMode(PIN_LED, OUTPUT);
-  pinMode(PIN_S1, OUTPUT);
+  pinMode(PIN_PULSADOR, INPUT);
 
   radio.begin();
   radio.openReadingPipe(1, periferico.direccion);
@@ -132,17 +142,28 @@ void setup() {
   timer = timerBegin(1000000); // 1 MHz = 1 µs
   timerAttachInterrupt(timer, &onTimer);
   timerAlarm(timer, 1000, true, 0); // tick every 1ms
+
+  digitalWrite(PIN_LED, LOW);
 }
 
 void loop() {
-  if(digitalRead(PIN_S1)){
+  if(digitalRead(PIN_PULSADOR)){
     flagBoton = 1;
   }
   if(flagBoton == 1){
     if(tiempoLed >= TIEMPO_LED){
       digitalWrite(PIN_LED, LOW);
     }
-    /*while (Serial.available() > 0) {
+    if(digitalRead(PIN_PULSADOR)){
+      flagPulsador = 1;
+    }
+    if(flagPulsador){
+      if(digitalRead(PIN_PULSADOR)){
+        mensajesNRF.push_back("probando");
+        flagPulsador = 0;
+      }
+    }
+    while (Serial.available() > 0) {
       char c = Serial.read();
       
       // Start of a new packet: clear any stale text
@@ -160,7 +181,7 @@ void loop() {
           trama = "";
         }
       }
-    }*/
+    }
     if(tiempoLectura == TIEMPO_LECTURA){
       leer = 1;
       tiempoLectura = 0;

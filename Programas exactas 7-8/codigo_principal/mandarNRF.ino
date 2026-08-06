@@ -5,6 +5,8 @@ void mandarNRF(String mensajeNRF, uint64_t direccion){
   radio.openWritingPipe(direccion);
   bool exito = radio.write(bufferMensajeNRF, sizeof(bufferMensajeNRF));
   if(exito){
+    digitalWrite(PIN_LED2, HIGH);
+    tiempoLed2 = 0;
     radio.startListening();
   }
   else{
