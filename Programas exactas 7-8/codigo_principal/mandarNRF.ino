@@ -1,4 +1,5 @@
 void mandarNRF(String mensajeNRF, uint64_t direccion){
+  Serial.println(mensajeNRF);
   char bufferMensajeNRF[32];
   mensajeNRF.toCharArray(bufferMensajeNRF, sizeof(bufferMensajeNRF));
   radio.stopListening();

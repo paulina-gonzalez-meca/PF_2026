@@ -55,13 +55,13 @@ bool flagCorte = 1;
 bool respuestaNRF = 0;
 bool flagMensajePulsador = 0;
 int cicloNRF = 0;
-int tiempoDelay = 0;
-int timerSMS = 0;
-int timerNRF = 0;
-int timerEng = 0;
-int tiempoLed1 = 0;
-int tiempoLed2 = 0;
-int tiempoPulsador = 0;
+volatile int tiempoDelay = 0;
+volatile int timerSMS = 0;
+volatile int timerNRF = 0;
+volatile int timerEng = 0;
+volatile int tiempoLed1 = 0;
+volatile int tiempoLed2 = 0;
+volatile int tiempoPulsador = 0;
 int indiceNum = 0;
 int indiceEng = 0;
 String trama = "";
@@ -116,7 +116,7 @@ void setup() {
 
   SerialBT.begin("pruebaESP32_central");
   Serial.begin(9600);
-  
+  pinMode(16, INPUT_PULLUP);
   sim800l.begin(9600, SERIAL_8N1, 16, 17);
   delay(15000);
 //COMANDOS DE DIAGNÓSTICO
@@ -138,7 +138,10 @@ void setup() {
   delay(1000);
   sim800l.println("AT+CNMI=2,2,0,0,0"); //configuracion de mensajes recibidos
   delay(1000);
-  Serial.print(sim800l.readString());
+  Serial.println("a");
+  if(sim800l.available()){
+    Serial.print(sim800l.readString());
+  }
   Serial.println("trama: #EMG,ApodoDisp,ResSens1,ResSens2,ResSens3*");
 
   perifericos.push_back(per("perif1", "cocina", "sensor temperatura freezer", "sensor puerta freezer", "sensor humedad freezer", 1, 1, 0xE1));
@@ -180,6 +183,7 @@ void loop() {
   if(flagMensajePulsador){
     if(digitalRead(PIN_PULSADOR) && tiempoPulsador <= 1000){
       mensajesNRF.push_back("probando NRF");
+      mensajesNRF.push_back("0");
       flagMensajePulsador = 0;
     }
     else if(digitalRead(PIN_PULSADOR) && tiempoPulsador > 1000){
@@ -236,7 +240,9 @@ void loop() {
         mensajesNRF.erase(mensajesNRF.begin());
       }
       else if(respuestaNRF == 0 && cicloNRF < 5){
-      mandarNRF(mensajesNRF[0], direcciones[mensajesNRF[1].toInt()]);
+        if(mensajesNRF.size() >= 2){
+          mandarNRF(mensajesNRF[0], direcciones[mensajesNRF[1].toInt()]);
+        }
       cicloNRF += 1;
       timerNRF = 0;
         if(mensajesNRF[0] == "recibido"){
