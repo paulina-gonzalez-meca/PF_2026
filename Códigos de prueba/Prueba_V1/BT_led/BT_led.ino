@@ -23,7 +23,7 @@ void setup() {
 }
 
 void loop() {
-  if(timerLed += 1000){
+  if(timerLed >= 1000){
     digitalWrite(PIN_LED, LOW);
   }
   if(timerMSJ == TIEMPO_MSJ){
