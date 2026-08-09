@@ -6,6 +6,7 @@
 #include "DHT.h"
 #include "datosPer.h"
 #include "BluetoothSerial.h"
+#include "BLEDevice.h"
 
 // incluir constantes
 #define ERROR "%"
@@ -23,7 +24,7 @@
 #define PIN_LED 21
 #define PIN_PULSADOR 20
 
-BluetoothSerial SerialBT;
+//BluetoothSerial SerialBT;
 
 class per{
   public:
@@ -123,7 +124,7 @@ void setup() {
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED, HIGH);
 
-  SerialBT.begin("pruebaESP32_per");
+  //SerialBT.begin("pruebaESP32_per");
   Serial.begin(115200);
   delay(2000);
   Serial.println("trama: #ApodoDisp,ResSens1,ResSens2,ResSens3*");
