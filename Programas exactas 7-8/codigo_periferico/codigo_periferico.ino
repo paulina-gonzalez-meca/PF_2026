@@ -148,16 +148,15 @@ void setup() {
 }
 
 void loop() {
-  if(digitalRead(PIN_PULSADOR)){
-    flagBoton = 1;
+  if(tiempoLed >= TIEMPO_LED){
+    digitalWrite(PIN_LED, LOW);
   }
-  if(flagBoton == 1){
-    if(tiempoLed >= TIEMPO_LED){
-      digitalWrite(PIN_LED, LOW);
-    }
+  if(flagBoton == 0){
     if(digitalRead(PIN_PULSADOR)){
-      flagPulsador = 1;
+      flagBoton = 1;
     }
+  }
+  else if(flagBoton == 1){
     if(flagPulsador){
       if(digitalRead(PIN_PULSADOR)){
         mensajesNRF.push_back("probando");
