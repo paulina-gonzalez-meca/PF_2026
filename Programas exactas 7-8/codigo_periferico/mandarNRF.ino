@@ -3,9 +3,9 @@ void mandarNRF(String mensajeNRF){
   mensajeNRF.toCharArray(bufferMensajeNRF, sizeof(bufferMensajeNRF));
   radio.stopListening();
   bool exito = radio.write(bufferMensajeNRF, sizeof(bufferMensajeNRF));
-  if(exito){
-    digitalWrite(PIN_LED, HIGH);
+  digitalWrite(PIN_LED, HIGH);
     tiempoLed = 0;
+  if(exito){
     radio.startListening();
   }
   else{
