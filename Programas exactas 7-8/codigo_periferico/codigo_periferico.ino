@@ -124,6 +124,7 @@ void setup() {
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED, HIGH);
 
+  Serial.println("TEST BEGIN");
   //SerialBT.begin("pruebaESP32_per");
   Serial.begin(115200);
   delay(2000);
@@ -132,6 +133,7 @@ void setup() {
   pinMode(PIN_ENERGIA, INPUT);
   pinMode(PIN_PULSADOR, INPUT);
 
+  SPI.begin(9,8,6,5);
   radio.begin();
   radio.openReadingPipe(1, periferico.direccion);
   radio.openWritingPipe(direccionCentral);
@@ -145,6 +147,7 @@ void setup() {
   timerAlarm(timer, 1000, true, 0); // tick every 1ms
 
   digitalWrite(PIN_LED, LOW);
+  Serial.println("test end setup");
 }
 
 void loop() {
