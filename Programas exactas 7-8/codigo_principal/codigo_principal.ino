@@ -16,11 +16,10 @@
 #define PIN_LED1 12
 #define PIN_LED2 14
 
-
 HardwareSerial sim800l(2);
 BluetoothSerial SerialBT;
 
-class per{
+class per {
   public:
     String nombreInterno;
     String nombreExterno;
@@ -31,7 +30,7 @@ class per{
     bool vivo;
     byte direccionNRF[6];
 
-    per(String nombrePeriferico, String nombrePerifericoExterior, String nombreSensorExterior1, String nombreSensorExterior2, String nombreSensorExterior3, bool perConEnergia, bool vivoPer, byte byteVariableNRF){
+    per(String nombrePeriferico, String nombrePerifericoExterior, String nombreSensorExterior1, String nombreSensorExterior2, String nombreSensorExterior3, bool perConEnergia, bool vivoPer, byte byteVariableNRF) {
       nombreInterno = nombrePeriferico;
       nombreExterno = nombrePerifericoExterior;
       nombreSensor1 = nombreSensorExterior1;
@@ -47,6 +46,7 @@ class per{
       direccionNRF[5] = 0x00;
     }
 };
+
 const uint64_t direcciones[] = {0xF0F0F0F0E1LL, 0xF0F0F0F0E2LL, 0xF0F0F0F0E3LL};
 const uint64_t direccionCentral = 0xF0F0F0F0E0LL;
 RF24 radio(PIN_CE, PIN_CSN);
@@ -62,6 +62,7 @@ volatile int timerEng = 0;
 volatile int tiempoLed1 = 0;
 volatile int tiempoLed2 = 0;
 volatile int tiempoPulsador = 0;
+volatile int tiempoComandos = 0; // Timer para los comandos de diagnóstico.
 int indiceNum = 0;
 int indiceEng = 0;
 String trama = "";
@@ -84,7 +85,7 @@ typedef enum {
 } PASOS_ENVIARSMS_t;
 PASOS_ENVIARSMS_t PSMS;
 
-typedef enum { //state machine
+typedef enum { // state machine
   EMG,
   APD,
   LUZ,
@@ -103,9 +104,27 @@ struct TramaPausada_t {
 };
 TramaPausada_t tramaPausada;
 
-hw_timer_t *timer = NULL; //timer
+// Máquina de estados para secuencia de diagnóstico SIM800L
+typedef enum {
+  GSM_WAIT_INIT,
+  GSM_AT,
+  GSM_CFUN,
+  GSM_CPIN,
+  GSM_CSCA,
+  GSM_CSQ,
+  GSM_CREG,
+  GSM_CPMS,
+  GSM_CMGF,
+  GSM_CNMI,
+  GSM_READY
+} PASOS_GSM_t;
 
-void IRAM_ATTR onTimer(); //function interrupts every 1ms
+PASOS_GSM_t pasoGSM = GSM_WAIT_INIT;
+
+hw_timer_t *timer = NULL; // timer
+
+void IRAM_ATTR onTimer(); // function interrupts every 1ms
+void gestionarComandosGSM();
 
 void setup() {
   pinMode(PIN_LED1, OUTPUT);
@@ -115,41 +134,14 @@ void setup() {
   digitalWrite(PIN_LED2, HIGH);
 
   SerialBT.begin("pruebaESP32_central");
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(16, INPUT_PULLUP);
   sim800l.begin(9600, SERIAL_8N1, 16, 17);
-  delay(15000);
-//COMANDOS DE DIAGNÓSTICO
-  sim800l.println("AT");
-  delay(500); 
-  sim800l.println("AT+CFUN?");
-  delay(1000); 
-  sim800l.println("AT+CPIN?");
-  delay(1000); 
-  sim800l.println("AT+CSCA?");
-  delay(1000); 
-  sim800l.println("AT+CSQ");
-  delay(2000); 
-  sim800l.println("AT+CREG?");
-  delay(2000); 
-  sim800l.println("AT+CPMS=\"SM\",\"SM\",\"SM\"");
-  delay(1000);
-  sim800l.println("AT+CMGF=1"); //confifuracion de formato de SMS (recibir y enviar)
-  delay(1000);
-  sim800l.println("AT+CNMI=2,2,0,0,0"); //configuracion de mensajes recibidos
-  delay(1000);
-  Serial.println("a");
-  if(sim800l.available()){
-    Serial.print(sim800l.readString());
-  }
-  Serial.println("trama: #EMG,ApodoDisp,ResSens1,ResSens2,ResSens3*");
 
   perifericos.push_back(per("perif1", "cocina", "sensor temperatura freezer", "sensor puerta freezer", "sensor humedad freezer", 1, 1, 0xE1));
   perifericos.push_back(per("perif2", "lab", "sensor temperatura freezer 2", "-", "-", 1, 1, 0xE2));
   perifericos.push_back(per("perif3", "a", "-", "-", "-", 1, 1, 0xE3));
-  numeros.push_back("+5491161386381");
-  //numeros.push_back("+5491163710617");
-  //numeros.push_back("+5491123692363");
+  numeros.push_back("+5491123692363");
 
   pinMode(PIN_ENERGIA, INPUT);
   pinMode(PIN_PULSADOR, INPUT);
@@ -161,15 +153,17 @@ void setup() {
   PSMS = PASO1;
   PDECO = EMG;
 
+  // Timer de sistema activado antes de iniciar el conteo de GSM
   timer = timerBegin(1000000); // 1 MHz = 1 µs
   timerAttachInterrupt(timer, &onTimer);
-  timerAlarm(timer, 1000, true, 0); // tick every 1ms
-
-  digitalWrite(PIN_LED1, LOW);
-  digitalWrite(PIN_LED2, LOW);
+  timerAlarm(timer, 1000, true, 0); // tick cada 1 ms
+  tiempoComandos = 0;
 }
 
 void loop() {
+  // Manejo secuencial no bloqueante del módulo GSM
+  gestionarComandosGSM();
+
   if(tiempoLed1 >= TIEMPO_LED){
     digitalWrite(PIN_LED1, LOW);
   }
@@ -243,8 +237,8 @@ void loop() {
         if(mensajesNRF.size() >= 2){
           mandarNRF(mensajesNRF[0], direcciones[mensajesNRF[1].toInt()]);
         }
-      cicloNRF += 1;
-      timerNRF = 0;
+        cicloNRF += 1;
+        timerNRF = 0;
         if(mensajesNRF[0] == "recibido"){
           respuestaNRF = 0;
           cicloNRF = 0;
@@ -268,6 +262,97 @@ void loop() {
   perifericosEnergia();
 }
 
+void gestionarComandosGSM() {
+  if (pasoGSM == GSM_READY) return;
+
+  switch (pasoGSM) {
+    case GSM_WAIT_INIT:
+      if (tiempoComandos >= 15000) {
+        sim800l.println("AT");
+        tiempoComandos = 0;
+        pasoGSM = GSM_AT;
+      }
+      break;
+
+    case GSM_AT:
+      if (tiempoComandos >= 500) {
+        sim800l.println("AT+CFUN?");
+        tiempoComandos = 0;
+        pasoGSM = GSM_CFUN;
+      }
+      break;
+
+    case GSM_CFUN:
+      if (tiempoComandos >= 1000) {
+        sim800l.println("AT+CPIN?");
+        tiempoComandos = 0;
+        pasoGSM = GSM_CPIN;
+      }
+      break;
+
+    case GSM_CPIN:
+      if (tiempoComandos >= 1000) {
+        sim800l.println("AT+CSCA?");
+        tiempoComandos = 0;
+        pasoGSM = GSM_CSCA;
+      }
+      break;
+
+    case GSM_CSCA:
+      if (tiempoComandos >= 1000) {
+        sim800l.println("AT+CSQ");
+        tiempoComandos = 0;
+        pasoGSM = GSM_CSQ;
+      }
+      break;
+
+    case GSM_CSQ:
+      if (tiempoComandos >= 2000) {
+        sim800l.println("AT+CREG?");
+        tiempoComandos = 0;
+        pasoGSM = GSM_CREG;
+      }
+      break;
+
+    case GSM_CREG:
+      if (tiempoComandos >= 2000) {
+        sim800l.println("AT+CPMS=\"SM\",\"SM\",\"SM\"");
+        tiempoComandos = 0;
+        pasoGSM = GSM_CPMS;
+      }
+      break;
+
+    case GSM_CPMS:
+      if (tiempoComandos >= 1000) {
+        sim800l.println("AT+CMGF=1");
+        tiempoComandos = 0;
+        pasoGSM = GSM_CMGF;
+      }
+      break;
+
+    case GSM_CMGF:
+      if (tiempoComandos >= 1000) {
+        sim800l.println("AT+CNMI=2,2,0,0,0");
+        tiempoComandos = 0;
+        pasoGSM = GSM_CNMI;
+      }
+      break;
+
+    case GSM_CNMI:
+      if (tiempoComandos >= 1000) {
+        Serial.println("a");
+        if (sim800l.available()) {
+          Serial.print(sim800l.readString());
+        }
+        Serial.println("trama: #EMG,ApodoDisp,ResSens1,ResSens2,ResSens3*");
+
+        digitalWrite(PIN_LED1, LOW);
+        digitalWrite(PIN_LED2, LOW);
+        pasoGSM = GSM_READY;
+      }
+      break;
+  }
+}
 
 void IRAM_ATTR onTimer() {
   tiempoLed1 += 1;
@@ -277,4 +362,5 @@ void IRAM_ATTR onTimer() {
   timerSMS += 1;
   timerEng += 1;
   timerNRF += 1;
+  tiempoComandos += 1; // Contador para comandos no bloqueantes
 }
