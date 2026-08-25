@@ -37,7 +37,7 @@ void enviarSMS(String mensaje) {
 // --------------------------------------------------
 void setup() {
 
-  Serial.begin(9600);
+  Serial.begin(115200);
   sim800l.begin(9600, SERIAL_8N1, 16, 17);
 
   // GPIO 2 con pull-up interno
