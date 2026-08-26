@@ -7,7 +7,7 @@ String mensajeSerial;
 // --------------------------------------------------
 // CONFIGURACIÓN DEL PIN DE SIMULACIÓN
 // --------------------------------------------------
-const int PIN_CORTE_LUZ = 2;
+#define PIN_CORTE_LUZ 2
 
 const unsigned long DEBOUNCE_TIME = 100; // ms
 
@@ -21,6 +21,11 @@ unsigned long ultimoCambioPin = 0;
 // FUNCIÓN PARA ENVIAR SMS
 // --------------------------------------------------
 void enviarSMS(String mensaje) {
+
+  // Forzar modo texto antes de enviar por si el SIM800L se reinició
+  sim800l.println("AT+CMGF=1");
+  delay(300);
+
   sim800l.println("AT+CMGS=\"+5491123692363\"");
   delay(500);
 
@@ -68,6 +73,8 @@ void setup() {
   sim800l.println("AT+CSQ");
   delay(2000);
 
+
+  // Configuración del SIM800L en modo texto para ENVÍO Y RECEPCIÓN DE MENSAJES
   sim800l.println("AT+CREG?");
   delay(2000);
 

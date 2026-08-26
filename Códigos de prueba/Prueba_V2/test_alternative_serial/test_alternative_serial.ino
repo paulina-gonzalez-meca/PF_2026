@@ -2,8 +2,8 @@
 
 // Definición de pines alternativos seguros para TX y RX
 // EVITADOS: Strapping pins (0, 2, 5, 12, 15), Memoria Flash (6-11) y Solo Entrada (34, 35, 36, 37, 38 39)
-#define RX_PIN 23  // Alternativas seguras: 18, 21, 22, 25, 26, 27, 32, 33
-#define TX_PIN 25  // Alternativas seguras: 19, 21, 22, 25, 26, 27, 32, 33
+#define RX_PIN 33  // Alternativas seguras: 18, 21, 22, 25, 26, 27, 32, 33
+#define TX_PIN 32  // Alternativas seguras: 19, 21, 22, 25, 26, 27, 32, 33
 #define UART_BAUD 9600
 
 // Instancia de puerto serie por hardware (UART2)
