@@ -1,8 +1,10 @@
 #include <Arduino.h>
 
 // Configuración de Pines del SIM800L en ESP32
-#define RXD2 16  // Conectar al TX del SIM800L
-#define TXD2 17  // Conectar al RX del SIM800L
+#define RXD2 16          // Conectar al TX del SIM800L
+#define TXD2 17          // Conectar al RX del SIM800L
+#define PIN_PULSADOR 32  // Pin boton
+#define DEBOUNCE 30      // 30ms
 
 // Número de teléfono de destino
 #define NUMERO_DESTINO "+5491123692363"
@@ -21,10 +23,13 @@ enum EstadoSMS {
 // Variables de Control
 EstadoSMS estadoActual = SMS_INIT_MODEM;
 unsigned long tiempoEstado = 0;
+unsigned long tiempoPulsador = 0;
+unsigned long ultimoTiempoPulsador = 0;
 
 String bufferSerialPC = "";
 String mensajeAEnviar = "";
 bool hayMensajeNuevo = false;
+bool ultimoEstado = 1;
 
 // Prototipos de Funciones
 void leerSerialPC();
@@ -33,47 +38,49 @@ void procesarEnvioSMS();
 
 void setup() {
   // Puerto de depuración y entrada de la PC
-  Serial.begin(115200);
-  
+  Serial.begin(9600);
+  pinMode(PIN_PULSADOR, INPUT);
+
   // Puerto UART2 conectado al SIM800L
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
 
   Serial.println("\n==============================================");
   Serial.println("  ESP32 Terminal a SMS (Código No Bloqueante) ");
   Serial.println("==============================================");
-  Serial.println("Escribe un mensaje y presiona Enter para enviarlo...\n");
+  Serial.println("Presionar boton para enviar mensaje");
 
   tiempoEstado = millis();
+  tiempoPulsador = millis();
 }
 
 void loop() {
-  leerSerialPC();        // Lee caracteres de la PC uno a uno
-  leerRespuestaSim800(); // Reenvía la respuesta del módem a la consola
-  procesarEnvioSMS();    // Gestiona la máquina de estados con millis()
+
+  mensaje();
+  leerRespuestaSim800();  // Reenvía la respuesta del módem a la consola
+  procesarEnvioSMS();     // Gestiona la máquina de estados con millis()
 }
 
 // ====================================================
-// Lectura No Bloqueante del Monitor Serie (PC)
+// mensaje
 // ====================================================
-void leerSerialPC() {
-  // Se usa 'if' en lugar de 'while' para procesar un carácter por ciclo de loop
-  if (Serial.available() > 0) {
-    char c = Serial.read();
+void mensaje() {
+  unsigned long ahora = millis();
+  int estadoPulsador = digitalRead(PIN_PULSADOR);
 
-    if (c == '\n' || c == '\r') {
-      if (bufferSerialPC.length() > 0) {
-        if (!hayMensajeNuevo && estadoActual == SMS_IDLE) {
-          mensajeAEnviar = bufferSerialPC;
-          hayMensajeNuevo = true;
-          Serial.print("\n[PC] Mensaje capturado para enviar: ");
-          Serial.println(mensajeAEnviar);
-        } else {
-          Serial.println("\n[!] El sistema está ocupado enviando un mensaje. Intenta de nuevo en unos segundos.");
-        }
-        bufferSerialPC = ""; // Limpia el buffer de entrada
-      }
-    } else {
-      bufferSerialPC += c;
+  // Detección de presionado (transición de HIGH a LOW con pull-up)
+  if (ultimoEstado == 1 && estadoPulsador == 0) {
+    if (ahora - ultimoTiempoPulsador >= DEBOUNCE) {
+      ultimoEstado = 0;
+      ultimoTiempoPulsador = ahora;
+    }
+  } 
+  // Detección de liberación (transición de LOW a HIGH)
+  else if (ultimoEstado == 0 && estadoPulsador == 1) {
+    if (ahora - ultimoTiempoPulsador >= DEBOUNCE) {
+      ultimoEstado = 1;
+      mensajeAEnviar = "verdura";
+      hayMensajeNuevo = true;  // <--- IMPORTANTE: Activa el envío
+      ultimoTiempoPulsador = ahora;
     }
   }
 }
@@ -85,7 +92,7 @@ void leerRespuestaSim800() {
   // Se lee byte a byte sin bloquear el hilo principal
   if (Serial2.available() > 0) {
     char c = Serial2.read();
-    Serial.write(c); // Muestra la respuesta en vivo en el Monitor Serie
+    Serial.write(c);  // Muestra la respuesta en vivo en el Monitor Serie
   }
 }
 
@@ -129,7 +136,7 @@ void procesarEnvioSMS() {
     case SMS_ENVIAR_CTRL_Z:
       // Espera 500ms tras volcar el texto para enviar la señal de confirmación
       if (ahora - tiempoEstado >= 500) {
-        Serial2.write(0x1A); // Envia carácter ASCII 26 (Ctrl+Z)
+        Serial2.write(0x1A);  // Envia carácter ASCII 26 (Ctrl+Z)
         tiempoEstado = ahora;
         estadoActual = SMS_ESPERAR_CONFIRMACION;
       }
@@ -139,7 +146,7 @@ void procesarEnvioSMS() {
       // Tiempo de holgura para recibir el OK de la red celular antes de liberar la máquina
       if (ahora - tiempoEstado >= 3000) {
         Serial.println("\n[SMS] Operación completada.");
-        hayMensajeNuevo = false; // Resetea la bandera para aceptar nuevos mensajes
+        hayMensajeNuevo = false;  // Resetea la bandera para aceptar nuevos mensajes
         estadoActual = SMS_IDLE;
       }
       break;
