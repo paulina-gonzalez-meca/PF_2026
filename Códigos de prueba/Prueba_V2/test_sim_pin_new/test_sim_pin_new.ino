@@ -9,7 +9,7 @@ String mensajeSerial;
 // --------------------------------------------------
 #define PIN_CORTE_LUZ 2
 
-const unsigned long DEBOUNCE_TIME = 100; // ms
+#define DEBOUNCE_TIME 100 // ms
 
 int lecturaPin = HIGH;
 int estadoPin = HIGH;

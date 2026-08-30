@@ -18,10 +18,10 @@ enum EstadoSMS {
   SMS_ENVIAR_TEXTO,
   SMS_ENVIAR_CTRL_Z,
   SMS_ESPERAR_CONFIRMACION
-};
+} EstadoSMS_t;
 
 // Variables de Control
-EstadoSMS estadoActual = SMS_INIT_MODEM;
+EstadoSMS_t estadoActual = SMS_INIT_MODEM;
 unsigned long tiempoEstado = 0;
 unsigned long tiempoPulsador = 0;
 unsigned long ultimoTiempoPulsador = 0;
@@ -73,7 +73,7 @@ void mensaje() {
       ultimoEstado = 0;
       ultimoTiempoPulsador = ahora;
     }
-  } 
+  }
   // Detección de liberación (transición de LOW a HIGH)
   else if (ultimoEstado == 0 && estadoPulsador == 1) {
     if (ahora - ultimoTiempoPulsador >= DEBOUNCE) {
