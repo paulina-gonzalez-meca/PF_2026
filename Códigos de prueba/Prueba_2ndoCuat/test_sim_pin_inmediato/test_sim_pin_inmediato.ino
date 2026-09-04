@@ -1,18 +1,21 @@
 #include <HardwareSerial.h>
+#include <Preferences.h>
 
 HardwareSerial sim800l(2);
+Preferences preferences;
 
 #define PIN_CORTE_LUZ 2
-#define DEBOUNCE_TIME 100 // ms
+#define DEBOUNCE_TIME 150  // ms
 
-// Interrupciones
+// CONFIGURACIÓN DE REINTENTOS
+const int MAX_REINTENTOS = 3;
+const unsigned long PAUSA_REINTENTO = 1000;
+int intentosActuales = 0;
+
 volatile bool cambioDetectado = false;
 volatile unsigned long ultimaInterrupcion = 0;
 int estadoPinActual = HIGH;
 
-// --------------------------------------------------
-// MÁQUINA DE ESTADOS PARA SMS NO BLOQUEANTE
-// --------------------------------------------------
 enum EstadoSMS {
   SMS_IDLE,
   SMS_ENVIAR_CMGF,
@@ -20,7 +23,8 @@ enum EstadoSMS {
   SMS_ENVIAR_CMGS,
   SMS_ESPERAR_CMGS,
   SMS_ENVIAR_TEXTO,
-  SMS_ESPERAR_ENVIO
+  SMS_ESPERAR_ENVIO,
+  SMS_REINTENTAR
 };
 
 EstadoSMS estadoEnvio = SMS_IDLE;
@@ -28,35 +32,49 @@ unsigned long timerSMS = 0;
 String mensajePendiente = "";
 String respuestaSIM = "";
 
-// Función para solicitar un envío (se llama sin bloquear)
 void solicitarEnvioSMS(String mensaje) {
   if (estadoEnvio == SMS_IDLE) {
     mensajePendiente = mensaje;
+    intentosActuales = 0;
     estadoEnvio = SMS_ENVIAR_CMGF;
-    Serial.println(">> Iniciando secuencia de envío SMS sin bloqueo...");
+    Serial.println(">> Iniciando secuencia de envío SMS...");
   } else {
-    Serial.println(">> ERROR: Hay un SMS en proceso. Intento descartado.");
+    Serial.println(">> ERROR: SMS en proceso. Intento descartado.");
   }
 }
 
-// Tarea periódica de control del SIM800L (se ejecuta continuo en el loop)
+void manejarFallaSMS(String razon) {
+  intentosActuales++;
+  Serial.print("\n>> FALLO EN SMS (");
+  Serial.print(razon);
+  Serial.print("). Intento ");
+  Serial.print(intentosActuales);
+  Serial.print(" de ");
+  Serial.println(MAX_REINTENTOS);
+
+  if (intentosActuales < MAX_REINTENTOS) {
+    sim800l.write(0x1B);
+    timerSMS = millis();
+    estadoEnvio = SMS_REINTENTAR;
+  } else {
+    Serial.println(">> ERROR CRÍTICO: Máximo de reintentos alcanzado.");
+    estadoEnvio = SMS_IDLE;
+  }
+}
+
 void procesarEnvioSMS() {
-  
-  // Leer respuestas entrantes del SIM800L de forma asíncrona
   while (sim800l.available() > 0) {
     char c = sim800l.read();
     respuestaSIM += c;
-    Serial.write(c); // Monitoreo en consola
+    Serial.write(c);
   }
 
   switch (estadoEnvio) {
-
     case SMS_IDLE:
-      // Nada pendiente por hacer
       respuestaSIM = "";
       break;
 
-    case SMS_ENVIAR_CMGF: // enviar CMGF
+    case SMS_ENVIAR_CMGF:
       respuestaSIM = "";
       sim800l.println("AT+CMGF=1");
       timerSMS = millis();
@@ -64,9 +82,10 @@ void procesarEnvioSMS() {
       break;
 
     case SMS_ESPERAR_CMGF:
-      // Avanza si recibe OK o por timeout (300 ms)
-      if (respuestaSIM.indexOf("OK") != -1 || (millis() - timerSMS >= 300)) {
+      if (respuestaSIM.indexOf("OK") != -1) {
         estadoEnvio = SMS_ENVIAR_CMGS;
+      } else if (millis() - timerSMS >= 2000) {
+        manejarFallaSMS("Timeout en CMGF");
       }
       break;
 
@@ -78,38 +97,41 @@ void procesarEnvioSMS() {
       break;
 
     case SMS_ESPERAR_CMGS:
-      // Avanza al recibir el prompt '>' o por timeout (1000 ms)
-      if (respuestaSIM.indexOf(">") != -1 || (millis() - timerSMS >= 1000)) {
+      if (respuestaSIM.indexOf(">") != -1) {
         estadoEnvio = SMS_ENVIAR_TEXTO;
+      } else if (millis() - timerSMS >= 5000) {
+        manejarFallaSMS("Timeout esperando '>'");
       }
       break;
 
     case SMS_ENVIAR_TEXTO:
       respuestaSIM = "";
       sim800l.print(mensajePendiente);
-      sim800l.write(0x1A); // CTRL+Z para enviar
+      sim800l.write(0x1A);
       timerSMS = millis();
       estadoEnvio = SMS_ESPERAR_ENVIO;
       break;
 
     case SMS_ESPERAR_ENVIO:
-      // El SIM800L puede tardar unos segundos en confirmar con +CMGS: o OK
-      if (respuestaSIM.indexOf("OK") != -1) {
+      if (respuestaSIM.indexOf("+CMGS:") != -1 || respuestaSIM.indexOf("OK") != -1) {
         Serial.println("\n>> ¡SMS ENVIADO CON ÉXITO!");
         estadoEnvio = SMS_IDLE;
-      } 
-      // Timeout de seguridad por si falla la red (10 segundos)
-      else if (millis() - timerSMS >= 10000) {
-        Serial.println("\n>> TIMEOUT: El SIM800L no confirmó el envío.");
-        estadoEnvio = SMS_IDLE;
+      } else if (respuestaSIM.indexOf("ERROR") != -1) {
+        manejarFallaSMS("Error devuelto por SIM800L");
+      } else if (millis() - timerSMS >= 15000) {
+        manejarFallaSMS("Timeout en envío");
+      }
+      break;
+
+    case SMS_REINTENTAR:
+      if (millis() - timerSMS >= PAUSA_REINTENTO) {
+        Serial.println(">> Reintentando envío...");
+        estadoEnvio = SMS_ENVIAR_CMGF;
       }
       break;
   }
 }
 
-// --------------------------------------------------
-// INTERRUPCIÓN (ISR)
-// --------------------------------------------------
 void IRAM_ATTR ISR_CambioEnergia() {
   unsigned long tiempoActual = millis();
   if (tiempoActual - ultimaInterrupcion > DEBOUNCE_TIME) {
@@ -118,31 +140,50 @@ void IRAM_ATTR ISR_CambioEnergia() {
   }
 }
 
-// --------------------------------------------------
-// SETUP
-// --------------------------------------------------
 void setup() {
   Serial.begin(115200);
   sim800l.begin(9600, SERIAL_8N1, 16, 17);
 
+  // NOTA: Si al cortar la luz el pin queda desconectado (flotante), 
+  // usa un pulldown físico (resistencia de 10k a GND) y cambia a INPUT_PULLDOWN.
   pinMode(PIN_CORTE_LUZ, INPUT_PULLUP);
+  
+  // Esperar a que la tensión del pin se estabilice al arrancar
+  delay(500); 
   estadoPinActual = digitalRead(PIN_CORTE_LUZ);
 
-  Serial.println("Iniciando sistema...");
+  Serial.println("\n--- INICIANDO SISTEMA ---");
+  Serial.print("Estado inicial del GPIO2: ");
+  Serial.println(estadoPinActual == LOW ? "LOW (Corte de Luz)" : "HIGH (Luz OK)");
 
-  // Configuración de la interrupción
+  preferences.begin("energia", false);
+  int ultimoEstadoGuardado = preferences.getInt("estado", HIGH);
+
+  // Dar tiempo para que el módulo SIM800L se registre completamente en la red GSM
+  delay(4000); 
+
+  // LOGICA DE DECISIÓN AL ARRANCAR
+  if (estadoPinActual == LOW) {
+    // Si arranca en LOW, SIEMPRE fuerza el envío del mensaje de corte
+    Serial.println(">> ALERTA EN SETUP: Detectado GPIO2 en LOW.");
+    solicitarEnvioSMS("EMERGENCIA: Corte de luz");
+    preferences.putInt("estado", LOW);
+  } 
+  else if (estadoPinActual == HIGH && ultimoEstadoGuardado == LOW) {
+    // Solo envía "Regreso de luz" si antes estaba registrado un corte
+    Serial.println(">> ALERTA EN SETUP: Luz restablecida.");
+    solicitarEnvioSMS("Regreso de luz");
+    preferences.putInt("estado", HIGH);
+  } else {
+    Serial.println(">> SETUP: Estado normal y estable.");
+  }
+
   attachInterrupt(digitalPinToInterrupt(PIN_CORTE_LUZ), ISR_CambioEnergia, CHANGE);
 }
 
-// --------------------------------------------------
-// LOOP
-// --------------------------------------------------
 void loop() {
-
-  // 1. Procesar la máquina de estados del SMS
   procesarEnvioSMS();
 
-  // 2. Manejo de la interrupción del Pin de Energía
   if (cambioDetectado) {
     cambioDetectado = false;
     int nuevoEstado = digitalRead(PIN_CORTE_LUZ);
@@ -151,14 +192,14 @@ void loop() {
       estadoPinActual = nuevoEstado;
 
       if (estadoPinActual == LOW) {
-        Serial.println("¡CAMBIO DETECTADO! GPIO 2 LOW");
-        solicitarEnvioSMS("SIMULACION CORTE DE LUZ");
+        Serial.println(">> CAMBIO EN LOOP: CORTE DE LUZ (GPIO2 LOW)");
+        preferences.putInt("estado", LOW);
+        solicitarEnvioSMS("EMERGENCIA: Corte de luz");
       } else {
-        Serial.println("¡CAMBIO DETECTADO! GPIO 2 HIGH");
-        solicitarEnvioSMS("SIMULACION LUZ ACTIVA");
+        Serial.println(">> CAMBIO EN LOOP: REGRESO DE LUZ (GPIO2 HIGH)");
+        preferences.putInt("estado", HIGH);
+        solicitarEnvioSMS("Regreso de luz");
       }
     }
   }
-
-  // 3. El microcontrolador queda libre para ejecutar otras tareas concurrentes aquí sin trabarse...
 }
