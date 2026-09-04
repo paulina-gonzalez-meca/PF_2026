@@ -3,7 +3,6 @@
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
-#include "BluetoothSerial.h"
 
 #define TIEMPO_ENVIAR_NRF 5000
 #define TIEMPO_ENVIAR_SMS 5000
@@ -17,7 +16,6 @@
 #define PIN_LED2 14
 
 HardwareSerial sim800l(2);
-BluetoothSerial SerialBT;
 
 class per {
   public:
@@ -133,14 +131,10 @@ void setup() {
   digitalWrite(PIN_LED1, HIGH);
   digitalWrite(PIN_LED2, HIGH);
 
-  SerialBT.begin("pruebaESP32_central");
   Serial.begin(115200);
   pinMode(16, INPUT_PULLUP);
   sim800l.begin(9600, SERIAL_8N1, 16, 17);
-
-  perifericos.push_back(per("perif1", "cocina", "sensor temperatura freezer", "sensor puerta freezer", "sensor humedad freezer", 1, 1, 0xE1));
-  perifericos.push_back(per("perif2", "lab", "sensor temperatura freezer 2", "-", "-", 1, 1, 0xE2));
-  perifericos.push_back(per("perif3", "a", "-", "-", "-", 1, 1, 0xE3));
+  
   numeros.push_back("+5491123692363");
   numeros.push_back("+5491161386381");
 
@@ -226,7 +220,7 @@ void loop() {
       }
     }
   }
-  if(mensajesNRF.empty() != true){
+  /* if(mensajesNRF.empty() != true){
     if(timerNRF >= TIEMPO_ENVIAR_NRF){
       if(respuestaNRF == 1){
         respuestaNRF = 0;
@@ -256,11 +250,11 @@ void loop() {
         mensajesNRF.erase(mensajesNRF.begin());
       }
     }
-  }
-  recibirNRF();
+  } */
+  // recibirNRF();
   recibirSMS();
-  decodificador();
-  perifericosEnergia();
+  // decodificador();
+  // perifericosEnergia();
 }
 
 void gestionarComandosGSM() {
