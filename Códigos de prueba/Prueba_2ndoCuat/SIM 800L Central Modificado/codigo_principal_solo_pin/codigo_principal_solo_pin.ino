@@ -1,13 +1,14 @@
 #include <HardwareSerial.h>
 #include <vector>
-#include <SPI.h>
-#include <nRF24L01.h>
-#include <RF24.h>
+//#include <SPI.h>
+//#include <nRF24L01.h>
+//#include <RF24.h>
 
 #define TIEMPO_ENVIAR_NRF 5000
 #define TIEMPO_ENVIAR_SMS 5000
 #define TIEMPO_ENERGIA_PERIFERICOS 100000
 #define TIEMPO_LED 100
+#define TIEMPO_COMPROBAR 1000
 #define PIN_ENERGIA 2
 #define PIN_PULSADOR 32
 #define PIN_CE 21
@@ -47,16 +48,20 @@ class per {
 
 const uint64_t direcciones[] = {0xF0F0F0F0E1LL, 0xF0F0F0F0E2LL, 0xF0F0F0F0E3LL};
 const uint64_t direccionCentral = 0xF0F0F0F0E0LL;
-RF24 radio(PIN_CE, PIN_CSN);
+//RF24 radio(PIN_CE, PIN_CSN);
 char mensajeRecibidoNRF[32];
 bool flagCorte = 1;
 bool respuestaNRF = 0;
+bool terminarGSMS = 0;
 bool flagMensajePulsador = 0;
 int cicloNRF = 0;
 volatile int tiempoDelay = 0;
+unsigned long inicio = 0;
+bool flagSenial = 0;
 volatile int timerSMS = 0;
 volatile int timerNRF = 0;
 volatile int timerEng = 0;
+volatile int tiempoComprobar = 0;
 volatile int tiempoLed1 = 0;
 volatile int tiempoLed2 = 0;
 volatile int tiempoPulsador = 0;
@@ -140,10 +145,10 @@ void setup() {
 
   pinMode(PIN_ENERGIA, INPUT);
   pinMode(PIN_PULSADOR, INPUT);
-  radio.begin();
-  radio.openReadingPipe(1, direccionCentral);
-  radio.setPALevel(RF24_PA_MAX);
-  radio.startListening();
+  // radio.begin();
+  // radio.openReadingPipe(1, direccionCentral);
+  // radio.setPALevel(RF24_PA_MAX);
+  // radio.startListening();
 
   PSMS = PASO1;
   PDECO = EMG;
@@ -157,14 +162,17 @@ void setup() {
 
 void loop() {
   // Manejo secuencial no bloqueante del módulo GSM
+  if(terminarGSMS){
+    //comprobarSenalSIM800L();
+    if(tiempoLed1 >= TIEMPO_LED){
+      digitalWrite(PIN_LED1, LOW);
+    }
+  }
   gestionarComandosGSM();
 
-  if(tiempoLed1 >= TIEMPO_LED){
-    digitalWrite(PIN_LED1, LOW);
-  }
-  if(tiempoLed2 >= TIEMPO_LED){
-    digitalWrite(PIN_LED2, LOW);
-  }
+  //if(tiempoLed2 >= TIEMPO_LED){
+  //  digitalWrite(PIN_LED2, LOW);
+  //}
   if(digitalRead(PIN_PULSADOR) == 0 && flagMensajePulsador == 0){
     flagMensajePulsador = 1;
     tiempoPulsador = 0;
@@ -252,7 +260,7 @@ void loop() {
     }
   } */
   // recibirNRF();
-  recibirSMS();
+  //recibirSMS();
   // decodificador();
   // perifericosEnergia();
 }
@@ -340,7 +348,7 @@ void gestionarComandosGSM() {
           Serial.print(sim800l.readString());
         }
         Serial.println("trama: #EMG,ApodoDisp,ResSens1,ResSens2,ResSens3*");
-
+        terminarGSMS = 1;
         digitalWrite(PIN_LED1, LOW);
         digitalWrite(PIN_LED2, LOW);
         pasoGSM = GSM_READY;
@@ -348,6 +356,63 @@ void gestionarComandosGSM() {
       break;
   }
 }
+
+/*
+bool comprobarSenalSIM800L() {
+  // Esperar respuesta
+  if (flagSenial == 0){
+    // Limpiar respuestas anteriores del SIM800L
+    while (sim800l.available()) {
+      sim800l.read();
+    }
+    sim800l.println("AT+CSQ");
+    inicio = millis();
+    flagSenial = 1;
+  }
+
+  if (millis() - inicio < 2000) {
+
+    if (sim800l.available()) {
+
+      String respuesta = sim800l.readString();
+
+      // Buscar "+CSQ:"
+      int posicion = respuesta.indexOf("+CSQ:");
+
+      if (posicion != -1) {
+
+        // Buscar la coma después del RSSI
+        int coma = respuesta.indexOf(',', posicion);
+
+        if (coma != -1) {
+
+          // Extraer el número RSSI
+          String rssiTexto = respuesta.substring(posicion + 5, coma);
+          rssiTexto.trim();
+
+          int rssi = rssiTexto.toInt();
+
+          // 99 = señal desconocida
+          if (rssi >= 10 && rssi <= 31) {
+            digitalWrite(PIN_LED2, HIGH);
+            tiempoComprobar = 0;
+            return true;
+          }
+          else{
+            // No hay señal suficiente
+            digitalWrite(PIN_LED2, LOW);
+            tiempoComprobar = 0;
+            return false;
+          }
+        }
+      }
+    }
+  }
+  else {
+    flagSenial = 0;
+  }
+}
+*/
 
 void IRAM_ATTR onTimer() {
   tiempoLed1 += 1;
@@ -358,4 +423,5 @@ void IRAM_ATTR onTimer() {
   timerEng += 1;
   timerNRF += 1;
   tiempoComandos += 1; // Contador para comandos no bloqueantes
+  tiempoComprobar += 1;
 }
