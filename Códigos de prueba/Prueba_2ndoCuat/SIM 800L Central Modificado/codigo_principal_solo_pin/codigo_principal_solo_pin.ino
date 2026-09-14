@@ -1,3 +1,4 @@
+#include "BluetoothSerial.h"
 #include <HardwareSerial.h>
 #include <vector>
 //#include <SPI.h>
@@ -15,8 +16,10 @@
 #define PIN_CSN 22
 #define PIN_LED1 12
 #define PIN_LED2 14
+#define TIMEOUT 2000
 
 HardwareSerial sim800l(2);
+BluetoothSerial SerialBT;
 
 class per {
   public:
@@ -57,6 +60,7 @@ bool flagMensajePulsador = 0;
 int cicloNRF = 0;
 volatile int tiempoDelay = 0;
 unsigned long inicio = 0;
+unsigned long tiempoInicio = 0;
 bool flagSenial = 0;
 volatile int timerSMS = 0;
 volatile int timerNRF = 0;
@@ -66,10 +70,13 @@ volatile int tiempoLed1 = 0;
 volatile int tiempoLed2 = 0;
 volatile int tiempoPulsador = 0;
 volatile int tiempoComandos = 0; // Timer para los comandos de diagnóstico.
+volatile int timerLecturaSim = 0;
+volatile int timerLecturaPin = 0;
 int indiceNum = 0;
 int indiceEng = 0;
 String trama = "";
 String tramaProceso = "";
+String bufferRespuesta = "";
 int ind = 0;
 bool decoEmg = 0;
 String respuesta[5];
@@ -87,6 +94,14 @@ typedef enum {
   PASO3
 } PASOS_ENVIARSMS_t;
 PASOS_ENVIARSMS_t PSMS;
+
+// Enum para gestionar los estados del SIM800L
+typedef enum { 
+  IDLE, 
+  ESPERANDO_RESPUESTA 
+  } ESTADO_SENAL_t;
+ESTADO_SENAL_t SENAL;
+
 
 typedef enum { // state machine
   EMG,
@@ -137,11 +152,12 @@ void setup() {
   digitalWrite(PIN_LED2, HIGH);
 
   Serial.begin(115200);
+  SerialBT.begin("Central_Dev"); // Nombre del dispositivo Bluetooth
   pinMode(16, INPUT_PULLUP);
   sim800l.begin(9600, SERIAL_8N1, 16, 17);
   
   numeros.push_back("+5491123692363");
-  numeros.push_back("+5491161386381");
+  // numeros.push_back("+5491161386381");
 
   pinMode(PIN_ENERGIA, INPUT);
   pinMode(PIN_PULSADOR, INPUT);
@@ -163,12 +179,15 @@ void setup() {
 void loop() {
   // Manejo secuencial no bloqueante del módulo GSM
   if(terminarGSMS){
+      verificarSenalSIM800L();
+      
     //comprobarSenalSIM800L();
     if(tiempoLed1 >= TIEMPO_LED){
       digitalWrite(PIN_LED1, LOW);
     }
   }
   gestionarComandosGSM();
+
 
   //if(tiempoLed2 >= TIEMPO_LED){
   //  digitalWrite(PIN_LED2, LOW);
@@ -228,6 +247,9 @@ void loop() {
       }
     }
   }
+
+  
+
   /* if(mensajesNRF.empty() != true){
     if(timerNRF >= TIEMPO_ENVIAR_NRF){
       if(respuestaNRF == 1){
@@ -263,6 +285,27 @@ void loop() {
   //recibirSMS();
   // decodificador();
   // perifericosEnergia();
+  
+  // qué dice el sim
+  /*if (timerLecturaSim >= 500) {
+  
+    char c = sim800l.read();
+    SerialBT.write(c); // para imprimir lo q devuelve el sim
+
+    timerLecturaSim = 0;
+  }*/
+  
+  // lectura fuente
+  /*if (timerLecturaPin >= 1000){
+  int lectura = analogRead(PIN_ENERGIA);
+   int voltaje = map(lectura, 0, 2735, 0, 12);
+   float lecturaVoltaje = (voltaje - 0.4) * 10/43;
+    SerialBT.print("V: ");
+    SerialBT.println(voltaje);
+    SerialBT.println(" ");
+
+  }*/
+  
 }
 
 void gestionarComandosGSM() {
@@ -272,14 +315,17 @@ void gestionarComandosGSM() {
     case GSM_WAIT_INIT:
       if (tiempoComandos >= 15000) {
         sim800l.println("AT");
+        SerialBT.print("Comando AT");
         tiempoComandos = 0;
         pasoGSM = GSM_AT;
+    
       }
       break;
 
     case GSM_AT:
       if (tiempoComandos >= 500) {
         sim800l.println("AT+CFUN?");
+        SerialBT.print("Comando AT+cfun?");
         tiempoComandos = 0;
         pasoGSM = GSM_CFUN;
       }
@@ -288,6 +334,7 @@ void gestionarComandosGSM() {
     case GSM_CFUN:
       if (tiempoComandos >= 1000) {
         sim800l.println("AT+CPIN?");
+        SerialBT.print("Comando AT+cpin?");
         tiempoComandos = 0;
         pasoGSM = GSM_CPIN;
       }
@@ -312,6 +359,7 @@ void gestionarComandosGSM() {
     case GSM_CSQ:
       if (tiempoComandos >= 2000) {
         sim800l.println("AT+CREG?");
+        SerialBT.print("Comando AT+creg");
         tiempoComandos = 0;
         pasoGSM = GSM_CREG;
       }
@@ -320,6 +368,7 @@ void gestionarComandosGSM() {
     case GSM_CREG:
       if (tiempoComandos >= 2000) {
         sim800l.println("AT+CPMS=\"SM\",\"SM\",\"SM\"");
+        SerialBT.print("Comando ATCPMS=\"SM\",\"SM\",\"SM\"");
         tiempoComandos = 0;
         pasoGSM = GSM_CPMS;
       }
@@ -328,6 +377,7 @@ void gestionarComandosGSM() {
     case GSM_CPMS:
       if (tiempoComandos >= 1000) {
         sim800l.println("AT+CMGF=1");
+        SerialBT.print("Comando AT+cmgf=1");
         tiempoComandos = 0;
         pasoGSM = GSM_CMGF;
       }
@@ -336,6 +386,7 @@ void gestionarComandosGSM() {
     case GSM_CMGF:
       if (tiempoComandos >= 1000) {
         sim800l.println("AT+CNMI=2,2,0,0,0");
+        SerialBT.print("at+cnmi=2,2,0,0,0");
         tiempoComandos = 0;
         pasoGSM = GSM_CNMI;
       }
@@ -345,9 +396,9 @@ void gestionarComandosGSM() {
       if (tiempoComandos >= 1000) {
         Serial.println("a");
         if (sim800l.available()) {
-          Serial.print(sim800l.readString());
+          SerialBT.print(sim800l.readString());
         }
-        Serial.println("trama: #EMG,ApodoDisp,ResSens1,ResSens2,ResSens3*");
+        SerialBT.print("trama: #EMG,ApodoDisp,ResSens1,ResSens2,ResSens3*");
         terminarGSMS = 1;
         digitalWrite(PIN_LED1, LOW);
         digitalWrite(PIN_LED2, LOW);
@@ -357,62 +408,75 @@ void gestionarComandosGSM() {
   }
 }
 
-/*
-bool comprobarSenalSIM800L() {
-  // Esperar respuesta
-  if (flagSenial == 0){
-    // Limpiar respuestas anteriores del SIM800L
-    while (sim800l.available()) {
-      sim800l.read();
-    }
-    sim800l.println("AT+CSQ");
-    inicio = millis();
-    flagSenial = 1;
-  }
 
-  if (millis() - inicio < 2000) {
+// Devuelve TRUE si hay señal válida, FALSE en caso contrario
+// IMPORTANTE: Llamar continuamente a esta función en el loop()
+bool verificarSenalSIM800L() {
+  bool resultado = false;
 
-    if (sim800l.available()) {
+  switch (SENAL) {
+    case IDLE:
+      // Paso 1: Vaciar buffer entrante viejo sin usar 'while'
+      if (sim800l.available()) {
+        sim800l.read();
+        break; // Sale para procesar un carácter por ciclo
+      }
+      
+      // Paso 2: Enviar comando AT
+      bufferRespuesta = "";
+      sim800l.println("AT+CSQ");
+      tiempoInicio = millis();
+      SENAL = ESPERANDO_RESPUESTA;
+      break;
 
-      String respuesta = sim800l.readString();
+    case ESPERANDO_RESPUESTA:
+      // Paso 3: Acumular caracteres disponibles uno a uno (No bloqueante)
+      if (sim800l.available()) {
+        char c = sim800l.read();
+        bufferRespuesta += c;
 
-      // Buscar "+CSQ:"
-      int posicion = respuesta.indexOf("+CSQ:");
+        // Comprobar si ya recibimos la respuesta completa del comando
+        if (bufferRespuesta.indexOf("OK") != -1 || bufferRespuesta.indexOf("ERROR") != -1) {
+          int posicion = bufferRespuesta.indexOf("+CSQ:");
 
-      if (posicion != -1) {
+          if (posicion != -1) {
+            int coma = bufferRespuesta.indexOf(',', posicion);
+            if (coma != -1) {
+              String rssiTexto = bufferRespuesta.substring(posicion + 6, coma);
+              rssiTexto.trim();
+              int rssi = rssiTexto.toInt();
 
-        // Buscar la coma después del RSSI
-        int coma = respuesta.indexOf(',', posicion);
-
-        if (coma != -1) {
-
-          // Extraer el número RSSI
-          String rssiTexto = respuesta.substring(posicion + 5, coma);
-          rssiTexto.trim();
-
-          int rssi = rssiTexto.toInt();
-
-          // 99 = señal desconocida
-          if (rssi >= 10 && rssi <= 31) {
-            digitalWrite(PIN_LED2, HIGH);
-            tiempoComprobar = 0;
-            return true;
-          }
-          else{
-            // No hay señal suficiente
+              // RSSI entre 10 y 31 indica señal aceptable/buena
+              if (rssi >= 10 && rssi <= 31) {
+                SerialBT.print("HAY SEÑAL ESTABLE");
+                digitalWrite(PIN_LED2, HIGH);
+                resultado = true;
+              } else {
+                SerialBT.print("NO HAY SEÑAL ESTABLE");
+                digitalWrite(PIN_LED2, LOW);
+              }
+            }
+          } else {
             digitalWrite(PIN_LED2, LOW);
-            tiempoComprobar = 0;
-            return false;
           }
+
+          // Reiniciar para la próxima verificación
+          SENAL = IDLE;
+          return resultado;
         }
       }
-    }
+
+      // Paso 4: Control de Timeout si el SIM800L no responde
+      if (millis() - tiempoInicio >= TIMEOUT) {
+        SerialBT.print("TIMEOUT");
+        digitalWrite(PIN_LED2, LOW);
+        SENAL = IDLE;
+      }
+      break;
   }
-  else {
-    flagSenial = 0;
-  }
+
+  return false;
 }
-*/
 
 void IRAM_ATTR onTimer() {
   tiempoLed1 += 1;
@@ -424,4 +488,6 @@ void IRAM_ATTR onTimer() {
   timerNRF += 1;
   tiempoComandos += 1; // Contador para comandos no bloqueantes
   tiempoComprobar += 1;
+  //timerLecturaSim += 1;
+  timerLecturaPin += 1; 
 }

@@ -26,5 +26,5 @@ void armarMensaje(String emergenciaAM, String luzAM, String nombreDispAM, String
     mensajeProceso += nombreSensor3AM + ": " + rtaSensor3AM + "\n";
   }
   mensajesSMS.push_back(mensajeProceso);
-  Serial.println(mensajeProceso);
+  SerialBT.print(mensajeProceso);
 }
