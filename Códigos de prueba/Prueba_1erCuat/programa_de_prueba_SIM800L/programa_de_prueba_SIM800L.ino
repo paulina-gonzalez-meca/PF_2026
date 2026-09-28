@@ -1,13 +1,15 @@
 #include <HardwareSerial.h>
+#include "BluetoothSerial.h"
 
 HardwareSerial sim800l(2);
 
+BluetoothSerial SerialBT;
 String mensajeSerial;
 
 // --------------------------------------------------
 // CONFIGURACIÓN DEL PIN DE SIMULACIÓN
 // --------------------------------------------------
-const int PIN_CORTE_LUZ = 2;
+const int PIN_CORTE_LUZ = 32;
 
 const unsigned long DEBOUNCE_TIME = 100; // ms
 
@@ -21,7 +23,7 @@ unsigned long ultimoCambioPin = 0;
 // FUNCIÓN PARA ENVIAR SMS
 // --------------------------------------------------
 void enviarSMS(String mensaje) {
-  sim800l.println("AT+CMGS=\"+5491123692363\"");
+  sim800l.println("AT+CMGS=\"+5491161386381\"");
   delay(500);
 
   sim800l.print(mensaje);
@@ -37,14 +39,14 @@ void enviarSMS(String mensaje) {
 // --------------------------------------------------
 void setup() {
 
-  Serial.begin(9600);
-  sim800l.begin(9600, SERIAL_8N1, 16, 17);
+  SerialBT.begin("ProbandoSim");
+  sim800l.begin(115200, SERIAL_8N1, 16, 17);
 
   // GPIO 2 con pull-up interno
   pinMode(PIN_CORTE_LUZ, INPUT_PULLUP);
 
-  Serial.println("---------------------------------------------");
-  Serial.println("Iniciando...");
+  SerialBT.println("---------------------------------------------");
+  SerialBT.println("Iniciando...");
 
   delay(15000);
 
@@ -52,6 +54,10 @@ void setup() {
   // ------------------------------------------------
   // COMANDOS DE DIAGNÓSTICO
   // ------------------------------------------------
+  sim800l.println("AT+IPR=115200");
+  delay(500);
+  sim800l.println("AT&W");
+  delay(500);
 
   sim800l.println("AT");
   delay(500);
@@ -85,7 +91,7 @@ void setup() {
   sim800l.println("AT+CNMI=2,2,0,0,0");
   delay(1000);
 
-  Serial.print(sim800l.readString());
+  SerialBT.print(sim800l.readString());
 
 
   // ------------------------------------------------
@@ -95,13 +101,13 @@ void setup() {
   estadoPin = digitalRead(PIN_CORTE_LUZ);
   lecturaPin = estadoPin;
 
-  Serial.print("Estado inicial GPIO 2: ");
+  SerialBT.print("Estado inicial GPIO 2: ");
 
   if (estadoPin == LOW) {
-    Serial.println("CORTE DE LUZ");
+    SerialBT.println("CORTE DE LUZ");
   } 
   else {
-    Serial.println("LUZ ACTIVA");
+    SerialBT.println("LUZ ACTIVA");
   }
 }
 
@@ -136,14 +142,14 @@ void loop() {
 
       if (estadoPin == LOW) {
 
-        Serial.println("GPIO 2 LOW -> SIMULACION CORTE DE LUZ");
+        SerialBT.println("GPIO 2 LOW -> SIMULACION CORTE DE LUZ");
 
         enviarSMS("SIMULACION CORTE DE LUZ");
 
       } 
       else {
 
-        Serial.println("GPIO 2 HIGH -> SIMULACION LUZ ACTIVA");
+        SerialBT.println("GPIO 2 HIGH -> SIMULACION LUZ ACTIVA");
 
         enviarSMS("SIMULACION LUZ ACTIVA");
       }
@@ -155,15 +161,15 @@ void loop() {
   // ENVÍO DE MENSAJES DESDE SERIAL
   // ==================================================
 
-  if (Serial.available() > 0) {
+  if (SerialBT.available() > 0) {
 
-    mensajeSerial = Serial.readString();
+    mensajeSerial = SerialBT.readString();
 
     if (mensajeSerial.length() > 0) {
 
       if (mensajeSerial[0] == '%') {
 
-        Serial.println(mensajeSerial);
+        SerialBT.println(mensajeSerial);
 
         enviarSMS(mensajeSerial);
 
@@ -182,6 +188,6 @@ void loop() {
 
   if (sim800l.available() > 0) {
 
-    Serial.print(sim800l.readString());
+    SerialBT.print(sim800l.readString());
   }
 }

@@ -9,8 +9,8 @@
 #define TIEMPO_ENERGIA_PERIFERICOS 100000
 #define TIEMPO_LED 100
 #define TIEMPO_COMPROBAR 1000
-#define PIN_ENERGIA 2
-#define PIN_PULSADOR 32
+#define PIN_ENERGIA 32
+#define PIN_PULSADOR 2
 #define PIN_CE 21
 #define PIN_CSN 22
 #define PIN_LED1 12
@@ -72,6 +72,7 @@ volatile int tiempoComandos = 0;
 volatile int timerLecturaSim = 0;
 volatile int timerLecturaPin = 0;
 volatile int timerResetSim = 0;
+volatile int tiempoCorte = 0;
 int indiceNum = 0;
 int indiceEng = 0;
 String trama = "";
@@ -172,15 +173,14 @@ void setup() {
   digitalWrite(PIN_LED2, HIGH);
   digitalWrite(PIN_RST, HIGH);  // Pin reset high está desactivado
 
-  Serial.begin(115200);
   SerialBT.begin("Central_Dev");  // Nombre del dispositivo Bluetooth
-  pinMode(16, INPUT_PULLUP);
-  sim800l.begin(9600, SERIAL_8N1, 16, 17);
+  sim800l.begin(115200, SERIAL_8N1, 16, 17);
 
-  strcpy(usuario[indiceUsuario].numeroUs, "5491123692363");
-  // numeros.push_back("+5491161386381");
+  strcpy(usuario[indiceUsuario].numeroUs, "+5491161386381");
+  indiceUsuario ++;
+  // numeros.push_back("+5491161386381");5491123692363
 
-  pinMode(PIN_ENERGIA, INPUT);
+  pinMode(PIN_ENERGIA, INPUT_PULLUP);
   pinMode(PIN_PULSADOR, INPUT);
   // radio.begin();
   // radio.openReadingPipe(1, direccionCentral);
@@ -189,23 +189,47 @@ void setup() {
 
   PSMS = PASO1;
   PDECO = EMG;
-  PRST = SIM_IDLE;
+  PRST = RST;
 
   // Timer de sistema activado antes de iniciar el conteo de GSM
   timer = timerBegin(1000000);  // 1 MHz = 1 µs
   timerAttachInterrupt(timer, &onTimer);
   timerAlarm(timer, 1000, true, 0);  // tick cada 1 ms
   tiempoComandos = 0;
+
+  // Send "AT" a couple of times to let auto-baud sync, then lock it to 9600
+  sim800l.println("AT");
+  delay(500);
+  sim800l.println("AT+IPR=115200"); // Locks module hardware permanently to 9600
+  delay(500);
 }
 
 void loop() {
   // Manejo secuencial no bloqueante del módulo GSM
   if (terminarGSMS) {
+    if(!mandandoSMS){
     verificarSenalSIM800L();
+    }
 
     //comprobarSenalSIM800L();
     if (tiempoLed1 >= TIEMPO_LED) {
       digitalWrite(PIN_LED1, LOW);
+    }
+    if (indiceMensajesSMS >= 1) {
+      if (timerSMS >= TIEMPO_ENVIAR_SMS) {
+        if (indiceNum < indiceUsuario) {
+          mandandoSMS = 1;
+          if(mandarSMS(mensajesSMS[0], usuario[indiceNum].numeroUs)){
+            indiceNum += 1;
+          }
+        } else{
+          if(eliminarPrimero(mensajesSMS, TAM_SMS)){
+            mandandoSMS = 0;
+            indiceMensajesSMS --;
+            indiceNum = 0;
+          }
+        }
+      }
     }
   }
   gestionarComandosGSM();
@@ -219,12 +243,13 @@ void loop() {
     tiempoPulsador = 0;
   }
   if (flagMensajePulsador) {
-    if (digitalRead(PIN_PULSADOR) && tiempoPulsador <= 1000) {
+    /*if (digitalRead(PIN_PULSADOR) && tiempoPulsador <= 1000) {
       mensajesNRF[indiceMensajesNRF] = "probando NRF";
       indiceMensajesNRF ++;
       flagMensajePulsador = 0;
-    } else if (digitalRead(PIN_PULSADOR) && tiempoPulsador > 1000) {
+    } else */if (digitalRead(PIN_PULSADOR) && tiempoPulsador > 1000) {
       mensajesSMS[indiceMensajesNRF] = "probando SMS";
+      SerialBT.println("probandoSMS");
       indiceMensajesNRF ++;
       flagMensajePulsador = 0;
     }
@@ -255,25 +280,6 @@ void loop() {
     }
   }
   lecturaEnergia();
-
-  if (indiceMensajesSMS >= 1) {
-    if (timerSMS >= TIEMPO_ENVIAR_SMS) {
-      if (indiceNum <= indiceUsuario) {
-        mandandoSMS = 1;
-        if(mandarSMS(mensajesSMS[0], usuario[indiceNum].numeroUs)){
-          indiceNum += 1;
-        }
-      } else{
-        if(eliminarPrimero(mensajesSMS, TAM_SMS)){
-          mandandoSMS = 0;
-          indiceMensajesSMS --;
-          indiceNum = 0;
-        }
-      }
-    }
-  }
-
-
 
   /* if(mensajesNRF.empty() != true){
     if(timerNRF >= TIEMPO_ENVIAR_NRF){
@@ -325,7 +331,7 @@ void loop() {
   int lectura = analogRead(PIN_ENERGIA);
    int voltaje = map(lectura, 0, 2735, 0, 12);
    float lecturaVoltaje = (voltaje - 0.4) * 10/43;
-    SerialBT.print("V: ");
+    SerialBT.println("V: ");
     SerialBT.println(voltaje);
     SerialBT.println(" ");
 
@@ -337,18 +343,19 @@ void gestionarComandosGSM() {
 
   switch (pasoGSM) {
     case GSM_RESTART:  // nuevo estado de reset
-
+      SerialBT.flush();
       reiniciarSIM800L();  // Llama a tu función de reset por hardware
 
-      if (PRST == IDLE) {  // Una vez terminado el ciclo de reset
+      if (PRST == SIM_IDLE) {  // Una vez terminado el ciclo de reset
         tiempoComandos = 0;
         pasoGSM = GSM_INICIO;  // Vuelve a empezar la inicialización
       }
       break;
     case GSM_INICIO:
       if (tiempoComandos >= 15000) {
+        bufferRespuesta = "";
         sim800l.println("AT");
-        SerialBT.print("Comando AT");
+        SerialBT.println("Comando AT");
         tiempoComandos = 0;
         pasoGSM = GSM_AT;
       }
@@ -361,16 +368,17 @@ void gestionarComandosGSM() {
         bufferRespuesta += c;
 
         if (bufferRespuesta.indexOf("OK") != -1) {
+          SerialBT.println(bufferRespuesta);
           sim800l.println("AT+CFUN?");
-          SerialBT.print("Comando AT+cfun?");
+          SerialBT.println("Comando AT+cfun?");
           bufferRespuesta = "";
           tiempoComandos = 0;
           pasoGSM = GSM_CFUN;
         }
       }
-
       // Fallo por Timeout: Si en 3 segundos no responde OK, mandar a reiniciar
-      if (tiempoComandos >= 3000) {
+      else if (tiempoComandos >= 3000) {
+        SerialBT.println(bufferRespuesta);
         pasoGSM = GSM_RESTART;
       }
       break;
@@ -379,22 +387,24 @@ void gestionarComandosGSM() {
       if (sim800l.available()) {
         char c = sim800l.read();
         bufferRespuesta += c;
-
-        if (bufferRespuesta.indexOf("OK") != -1) {
-          sim800l.println("AT+CPIN?");
-          SerialBT.print("Comando AT+cpin?");
-          bufferRespuesta = "";
-          tiempoComandos = 0;
-          pasoGSM = GSM_CPIN;
-        }
-        else if (bufferRespuesta.indexOf("ERROR") != -1){
-          sim800l.println("AT+CFUN?");
-          SerialBT.print("Comando AT+cfun?");
-          bufferRespuesta = "";
-          tiempoComandos = 0;
-        }
+      }
+      if (bufferRespuesta.indexOf("OK") != -1) {
+        SerialBT.println(bufferRespuesta);
+        sim800l.println("AT+CPIN?");
+        SerialBT.println("Comando AT+cpin?");
+        bufferRespuesta = "";
+        tiempoComandos = 0;
+        pasoGSM = GSM_CPIN;
+      }
+      else if (bufferRespuesta.indexOf("ERROR") != -1){
+      SerialBT.println(bufferRespuesta);
+        sim800l.println("AT+CFUN?");
+        SerialBT.println("Comando AT+cfun?");
+        bufferRespuesta = "";
+        tiempoComandos = 0;
       }
       else if(tiempoComandos >= CONFIG_TIMEOUT){
+        SerialBT.println(bufferRespuesta);
         tiempoComandos = 0;
         pasoGSM = GSM_RESTART;
       }
@@ -404,21 +414,24 @@ void gestionarComandosGSM() {
       if (sim800l.available()) {
         char c = sim800l.read();
         bufferRespuesta += c;
+      }
 
-        if (bufferRespuesta.indexOf("OK") != -1) {
-          sim800l.println("AT+CSCA?");
-          bufferRespuesta = "";
-          tiempoComandos = 0;
-          pasoGSM = GSM_CSCA;
-        }
-        else if (bufferRespuesta.indexOf("ERROR") != -1){
-          sim800l.println("AT+CPIN?");
-          SerialBT.print("Comando AT+cpin?");
-          bufferRespuesta = "";
-          tiempoComandos = 0;
-        }
+      if (bufferRespuesta.indexOf("OK") != -1) {
+        SerialBT.println(bufferRespuesta);
+        sim800l.println("AT+CSCA?");
+        bufferRespuesta = "";
+        tiempoComandos = 0;
+        pasoGSM = GSM_CSCA;
+      }
+      else if (bufferRespuesta.indexOf("ERROR") != -1){
+        SerialBT.println(bufferRespuesta);
+        sim800l.println("AT+CPIN?");
+        SerialBT.println("Comando AT+cpin?");
+        bufferRespuesta = "";
+        tiempoComandos = 0;
       }
       else if(tiempoComandos >= CONFIG_TIMEOUT){
+        SerialBT.println(bufferRespuesta);
         tiempoComandos = 0;
         pasoGSM = GSM_RESTART;
       }
@@ -428,20 +441,23 @@ void gestionarComandosGSM() {
       if (sim800l.available()) {
         char c = sim800l.read();
         bufferRespuesta += c;
+      }
 
-        if (bufferRespuesta.indexOf("OK") != -1) {
-          sim800l.println("AT+CSQ");
-          bufferRespuesta = "";
-          tiempoComandos = 0;
-          pasoGSM = GSM_CSQ;
-        }
-        else if (bufferRespuesta.indexOf("ERROR") != -1){
-          sim800l.println("AT+CSCA?");
-          bufferRespuesta = "";
-          tiempoComandos = 0;
-        }
+      if (bufferRespuesta.indexOf("OK") != -1) {
+        SerialBT.println(bufferRespuesta);
+        sim800l.println("AT+CSQ");
+        bufferRespuesta = "";
+        tiempoComandos = 0;
+        pasoGSM = GSM_CSQ;
+      }
+      else if (bufferRespuesta.indexOf("ERROR") != -1){
+        SerialBT.println(bufferRespuesta);
+        sim800l.println("AT+CSCA?");
+        bufferRespuesta = "";
+        tiempoComandos = 0;
       }
       else if(tiempoComandos >= CONFIG_TIMEOUT){
+        SerialBT.println(bufferRespuesta);
         tiempoComandos = 0;
         pasoGSM = GSM_RESTART;
       }
@@ -451,21 +467,24 @@ void gestionarComandosGSM() {
       if (sim800l.available()) {
         char c = sim800l.read();
         bufferRespuesta += c;
+      }
 
-        if (bufferRespuesta.indexOf("OK") != -1) {
-          sim800l.println("AT+CREG?");
-          SerialBT.print("Comando AT+creg");
-          bufferRespuesta = "";
-          tiempoComandos = 0;
-          pasoGSM = GSM_CREG;
-        }
-        else if (bufferRespuesta.indexOf("ERROR") != -1){
-          sim800l.println("AT+CSQ");
-          bufferRespuesta = "";
-          tiempoComandos = 0;
-        }
+      if (bufferRespuesta.indexOf("OK") != -1) {
+        SerialBT.println(bufferRespuesta);
+        sim800l.println("AT+CREG?");
+        SerialBT.println("Comando AT+creg");
+        bufferRespuesta = "";
+        tiempoComandos = 0;
+        pasoGSM = GSM_CREG;
+      }
+      else if (bufferRespuesta.indexOf("ERROR") != -1){
+        SerialBT.println(bufferRespuesta);
+        sim800l.println("AT+CSQ");
+        bufferRespuesta = "";
+        tiempoComandos = 0;
       }
       else if(tiempoComandos >= TIMEOUT){
+        SerialBT.println(bufferRespuesta);
         tiempoComandos = 0;
         pasoGSM = GSM_RESTART;
       }
@@ -476,25 +495,30 @@ void gestionarComandosGSM() {
       if (sim800l.available()) {
         char c = sim800l.read();
         bufferRespuesta += c;
-        if (bufferRespuesta.indexOf("+CREG: 0,1") != -1 || bufferRespuesta.indexOf("+CREG: 0,5") != -1 || bufferRespuesta.indexOf("+CREG: 1") != -1 || bufferRespuesta.indexOf("+CREG: 5") != -1) {
-          bufferRespuesta = "";
-          sim800l.println("AT+CPMS=\"SM\",\"SM\",\"SM\"");
-          tiempoComandos = 0;
-          pasoGSM = GSM_CPMS;
-          break;
-        } else if (bufferRespuesta.indexOf("OK") != -1 || bufferRespuesta.indexOf("ERROR") != -1) {
-          bufferRespuesta = "";
-        }
       }
       // 2. Re-consultar AT+CREG? cada 2 segundos mientras se espera red
       static unsigned long timerReintentoCREG = 0;
       if (tiempoComandos - timerReintentoCREG >= 2000) {
+        SerialBT.println(bufferRespuesta);
+        bufferRespuesta = "";
         timerReintentoCREG = tiempoComandos;
         sim800l.println("AT+CREG?");
       }
+      if (bufferRespuesta.indexOf("+CREG: 0,1") != -1 || bufferRespuesta.indexOf("+CREG: 0,5") != -1 || bufferRespuesta.indexOf("+CREG: 1") != -1 || bufferRespuesta.indexOf("+CREG: 5") != -1) {
+        SerialBT.println(bufferRespuesta);
+        bufferRespuesta = "";
+        sim800l.println("AT+CPMS=\"SM\",\"SM\",\"SM\"");
+        tiempoComandos = 0;
+        pasoGSM = GSM_CPMS;
+        break;
+      } else if (bufferRespuesta.indexOf("OK") != -1 || bufferRespuesta.indexOf("ERROR") != -1) {
+        SerialBT.println(bufferRespuesta);
+        bufferRespuesta = "";
+      }
 
       // 3. Si pasan 30 segundos acumulados sin enganchar red -> Reiniciar
-      if (tiempoComandos >= 30000) {
+      else if (tiempoComandos >= 30000) {
+        SerialBT.println(bufferRespuesta);
         timerReintentoCREG = 0;
         pasoGSM = GSM_RESTART;
       }
@@ -505,21 +529,24 @@ void gestionarComandosGSM() {
       if (sim800l.available()) {
         char c = sim800l.read();
         bufferRespuesta += c;
+      }
 
-        if (bufferRespuesta.indexOf("OK") != -1) {
-          sim800l.println("AT+CMGF=1");
-          SerialBT.print("Comando AT+cmgf=1");
-          bufferRespuesta = "";
-          tiempoComandos = 0;
-          pasoGSM = GSM_CMGF;
-        }
-        else if (bufferRespuesta.indexOf("ERROR") != -1){
-          sim800l.println("AT+CPMS=\"SM\",\"SM\",\"SM\"");
-          bufferRespuesta = "";
-          tiempoComandos = 0;
-        }
+      if (bufferRespuesta.indexOf("OK") != -1) {
+        SerialBT.println(bufferRespuesta);
+        sim800l.println("AT+CMGF=1");
+        SerialBT.println("Comando AT+cmgf=1");
+        bufferRespuesta = "";
+        tiempoComandos = 0;
+        pasoGSM = GSM_CMGF;
+      }
+      else if (bufferRespuesta.indexOf("ERROR") != -1){
+        SerialBT.println(bufferRespuesta);
+        sim800l.println("AT+CPMS=\"SM\",\"SM\",\"SM\"");
+        bufferRespuesta = "";
+        tiempoComandos = 0;
       }
       else if(tiempoComandos >= CONFIG_TIMEOUT){
+        SerialBT.println(bufferRespuesta);
         tiempoComandos = 0;
         pasoGSM = GSM_RESTART;
       }
@@ -529,22 +556,25 @@ void gestionarComandosGSM() {
       if (sim800l.available()) {
         char c = sim800l.read();
         bufferRespuesta += c;
+      }
 
-        if (bufferRespuesta.indexOf("OK") != -1) {
+      if (bufferRespuesta.indexOf("OK") != -1) {
+        SerialBT.println(bufferRespuesta);
         sim800l.println("AT+CNMI=2,2,0,0,0");
-        SerialBT.print("at+cnmi=2,2,0,0,0");
-          bufferRespuesta = "";
+        SerialBT.println("at+cnmi=2,2,0,0,0");
+        bufferRespuesta = "";
         tiempoComandos = 0;
         pasoGSM = GSM_CNMI;
-        }
-        else if (bufferRespuesta.indexOf("ERROR") != -1){
-          sim800l.println("AT+CMGF=1");
-          SerialBT.print("Comando AT+cmgf=1");
-          bufferRespuesta = "";
-          tiempoComandos = 0;
-        }
+      }
+      else if (bufferRespuesta.indexOf("ERROR") != -1){
+        SerialBT.println(bufferRespuesta);
+        sim800l.println("AT+CMGF=1");
+        SerialBT.println("Comando AT+cmgf=1");
+        bufferRespuesta = "";
+        tiempoComandos = 0;
       }
       else if(tiempoComandos >= CONFIG_TIMEOUT){
+        SerialBT.println(bufferRespuesta);
         tiempoComandos = 0;
         pasoGSM = GSM_RESTART;
       }
@@ -554,24 +584,27 @@ void gestionarComandosGSM() {
       if (sim800l.available()) {
         char c = sim800l.read();
         bufferRespuesta += c;
+      }
 
-        if (bufferRespuesta.indexOf("OK") != -1) {
-          SerialBT.print("trama: #EMG,ApodoDisp,ResSens1,ResSens2,ResSens3*");
-          SerialBT.print("SIM800L Ready");
-          bufferRespuesta = "";
-          terminarGSMS = 1;
-          digitalWrite(PIN_LED1, LOW);
-          digitalWrite(PIN_LED2, LOW);
-          pasoGSM = GSM_READY;
-        }
-        else if (bufferRespuesta.indexOf("ERROR") != -1){
-          sim800l.println("AT+CNMI=2,2,0,0,0");
-          SerialBT.print("at+cnmi=2,2,0,0,0");
-          bufferRespuesta = "";
-          tiempoComandos = 0;
-        }
+      if (bufferRespuesta.indexOf("OK") != -1) {
+        SerialBT.println(bufferRespuesta);
+        SerialBT.println("trama: #EMG,ApodoDisp,ResSens1,ResSens2,ResSens3*");
+        SerialBT.println("SIM800L Ready");
+        bufferRespuesta = "";
+        terminarGSMS = 1;
+        digitalWrite(PIN_LED1, LOW);
+        digitalWrite(PIN_LED2, LOW);
+        pasoGSM = GSM_READY;
+      }
+      else if (bufferRespuesta.indexOf("ERROR") != -1){
+        SerialBT.println(bufferRespuesta);
+        sim800l.println("AT+CNMI=2,2,0,0,0");
+        SerialBT.println("at+cnmi=2,2,0,0,0");
+        bufferRespuesta = "";
+        tiempoComandos = 0;
       }
       else if(tiempoComandos >= CONFIG_TIMEOUT){
+        SerialBT.println(bufferRespuesta);
         tiempoComandos = 0;
         pasoGSM = GSM_RESTART;
       }
@@ -619,11 +652,11 @@ bool verificarSenalSIM800L() {
 
               // RSSI entre 10 y 31 indica señal aceptable/buena
               if (rssi >= 10 && rssi <= 31) {
-                SerialBT.print("HAY SEÑAL ESTABLE");
+                //SerialBT.println("HAY SEÑAL ESTABLE");
                 digitalWrite(PIN_LED2, HIGH);
                 resultado = true;
               } else {
-                SerialBT.print("NO HAY SEÑAL ESTABLE");
+                //SerialBT.println("NO HAY SEÑAL ESTABLE");
                 digitalWrite(PIN_LED2, LOW);
               }
             }
@@ -639,7 +672,7 @@ bool verificarSenalSIM800L() {
 
       // Paso 4: Control de Timeout si el SIM800L no responde
       if (tiempoComandos >= TIMEOUT) {
-        SerialBT.print("TIMEOUT");
+        SerialBT.println("TIMEOUT");
         digitalWrite(PIN_LED2, LOW);
         SENAL = IDLE;
       }
@@ -653,7 +686,7 @@ bool verificarSenalSIM800L() {
 void reiniciarSIM800L() {
   switch (PRST) {
     case RST:
-      SerialBT.print("SIM800L Reset");
+      SerialBT.println("SIM800L Reset");
       digitalWrite(PIN_RST, LOW);
       if (timerResetSim >= TIEMPO_RST) {
 
@@ -686,4 +719,5 @@ void IRAM_ATTR onTimer() {
   //timerLecturaSim += 1;
   timerLecturaPin += 1;
   timerResetSim += 1;
+  tiempoCorte += 1;
 }

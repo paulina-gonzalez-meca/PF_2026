@@ -17,7 +17,7 @@ bool mandarSMS(String mensaje, String numero){
       if(tiempoDelay >= 1000){
         sim800l.write(0x1A);
         digitalWrite(PIN_LED1, HIGH);
-        
+        SerialBT.println("mandando SMS");
         tiempoLed1 = 0;
         tiempoDelay = 0;
         timerSMS = 0;
