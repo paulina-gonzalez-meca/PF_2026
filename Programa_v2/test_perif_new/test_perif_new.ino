@@ -2,6 +2,7 @@
 // ATTINY CORE --> http://drazzy.com/package_drazzy.com_index.json (Poner en Preferences)
 // HERRAMIENTAS --> PLACA --> ATTINY 84A
 // Mapeo Clockwise (PIN MAPPING --> clockwise)
+// INCOMPLETO --> Finalizar SI o SI para antes del 30/10/2026.
 
 #include <SPI.h>
 #include <nRF24L01.h>
@@ -22,7 +23,9 @@
 #define PIN_IRQ 2 // No sé para que sirve aún
 #define PIN_CSN 7
 #define PIN_CE 2
-
+#define PIN_SCK 4
+#define PIN_MOSI 6
+#define PIN_MISO 5
 
 #define PIN_RESET
 
@@ -58,8 +61,9 @@ unsigned long int tiempoLed = 0;
 unsigned long int tiempoLectura = 0;
 int switchLecturas = 0;
 unsigned long int timerNRF = 0;
-char[32] trama = "";
-char[32] tramaProceso = "";
+// corregir
+char[32] tramaNRF;
+char[32] tramaProceso;
 String tramaPerifericoFinal = "";
 
 int ind = 0;
@@ -91,22 +95,43 @@ std::vector<datosPer> filaDatosPer;
 
 char bufferNRF[10][32] = {};
 
+typedef enum { //maquina de estados
+  INICIO,
+  APD,
+  L1,
+  L2,
+  L3
+} PASOS_DECODIFICADOR_t;
+PASOS_DECODIFICADOR_t PDECO;
+
+typedef enum {
+  EMG,
+  LUZ,
+  SENSOR_1,
+  SENSOR_2,
+  SENSOR_3,
+  ARMADO_ENVIADO
+} ESTADOSARMADOPERIFERICO_t;
+ESTADOSARMADOPERIFERICO_t estadosArmadoPeriferico = EMG;
+
+hw_timer_t *timer = NULL; //timer
+
+void IRAM_ATTR onTimer(); //function interrupts every 1ms
 
 void setup() {
-  Serial.begin(9600);
+  
 
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED, HIGH);
 
-  Serial.println("TEST BEGIN");
-  //SerialBT.begin("pruebaESP32_per");
+
   delay(2000);
   Serial.println("trama: #ApodoDisp,ResSens1,ResSens2,ResSens3*");
 
   pinMode(PIN_ENERGIA, INPUT);
   pinMode(PIN_PULSADOR, INPUT);
 
-  SPI.begin(9,8,6,5);
+  SPI.begin(PIN_SCK,PIN_MISO,PIN_MOSI,5);
   radio.begin();
   radio.openReadingPipe(1, periferico.direccion);
   radio.openWritingPipe(direccionCentral);
@@ -130,7 +155,7 @@ void loop() {
 }
 
 
-void insertarEnTren(const char* nuevoDato) {
+/*void insertarEnTren(const char* nuevoDato) {
   // 1. Si no hemos llenado el buffer de 10, incrementamos la cuenta
   if (totalElementos < 10) {
     totalElementos++;
@@ -147,4 +172,4 @@ void insertarEnTren(const char* nuevoDato) {
   Serial.print("\n--> Nuevo dato ingresado: ");
   Serial.println(nuevoDato);
   mostrarBuffer();
-}
+}*/
