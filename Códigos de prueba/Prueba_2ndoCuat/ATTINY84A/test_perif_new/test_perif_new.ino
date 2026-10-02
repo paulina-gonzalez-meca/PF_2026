@@ -1,8 +1,10 @@
+// INCOMPLETO --> Finalizar SI o SI para antes del 30/10/2026.
+
 // USAR ARDUINO UNO COMO ISP PARA ATTINY84
 // ATTINY CORE --> http://drazzy.com/package_drazzy.com_index.json (Poner en Preferences)
 // HERRAMIENTAS --> PLACA --> ATTINY 84A
 // Mapeo Clockwise (PIN MAPPING --> clockwise)
-// INCOMPLETO --> Finalizar SI o SI para antes del 30/10/2026.
+
 
 #include <SPI.h>
 #include <nRF24L01.h>
