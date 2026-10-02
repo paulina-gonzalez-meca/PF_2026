@@ -9,11 +9,12 @@
 #define TIEMPO_ENERGIA_PERIFERICOS 100000
 #define TIEMPO_LED 100
 #define TIEMPO_COMPROBAR 1000
-#define RX_PIN 19
-#define TX_PIN 21
 #define PIN_ENERGIA 35
+#define PIN_PULSADOR 2
 #define PIN_CE 5
 #define PIN_CSN 15
+#define PIN_LED1 12
+#define PIN_LED2 14
 #define TIMEOUT 2000
 #define CONFIG_TIMEOUT 1000
 #define TAM_SMS 10
@@ -64,6 +65,8 @@ volatile int timerSMS = 0;
 volatile int timerNRF = 0;
 volatile int timerEng = 0;
 volatile int tiempoComprobar = 0;
+volatile int tiempoLed1 = 0;
+volatile int tiempoLed2 = 0;
 volatile int tiempoPulsador = 0;
 volatile int tiempoComandos = 0;
 volatile int timerLecturaSim = 0;
@@ -161,18 +164,24 @@ void IRAM_ATTR onTimer();  // function interrupts every 1ms
 void gestionarComandosGSM();
 
 void setup() {
+  pinMode(PIN_LED1, OUTPUT);
+  pinMode(PIN_LED2, OUTPUT);
   pinMode(PIN_RST, OUTPUT);  // Pin Reset es output
 
+
+  digitalWrite(PIN_LED1, HIGH);
+  digitalWrite(PIN_LED2, HIGH);
   digitalWrite(PIN_RST, HIGH);  // Pin reset high está desactivado
 
   SerialBT.begin("Central_Dev");  // Nombre del dispositivo Bluetooth
-  sim800l.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
+  sim800l.begin(115200, SERIAL_8N1, 16, 17);
 
   strcpy(usuario[indiceUsuario].numeroUs, "+5491161386381");
   indiceUsuario ++;
   // numeros.push_back("+5491161386381");5491123692363
 
   pinMode(PIN_ENERGIA, INPUT_PULLUP);
+  pinMode(PIN_PULSADOR, INPUT);
   // radio.begin();
   // radio.openReadingPipe(1, direccionCentral);
   // radio.setPALevel(RF24_PA_MAX);
@@ -203,6 +212,9 @@ void loop() {
     }
 
     //comprobarSenalSIM800L();
+    if (tiempoLed1 >= TIEMPO_LED) {
+      digitalWrite(PIN_LED1, LOW);
+    }
     if (indiceMensajesSMS >= 1) {
       if (timerSMS >= TIEMPO_ENVIAR_SMS) {
         if (indiceNum < indiceUsuario) {
@@ -221,6 +233,52 @@ void loop() {
     }
   }
   gestionarComandosGSM();
+
+
+  //if(tiempoLed2 >= TIEMPO_LED){
+  //  digitalWrite(PIN_LED2, LOW);
+  //}
+  if (digitalRead(PIN_PULSADOR) == 0 && flagMensajePulsador == 0) {
+    flagMensajePulsador = 1;
+    tiempoPulsador = 0;
+  }
+  if (flagMensajePulsador) {
+    /*if (digitalRead(PIN_PULSADOR) && tiempoPulsador <= 1000) {
+      mensajesNRF[indiceMensajesNRF] = "probando NRF";
+      indiceMensajesNRF ++;
+      flagMensajePulsador = 0;
+    } else */if (digitalRead(PIN_PULSADOR) && tiempoPulsador > 1000) {
+      mensajesSMS[indiceMensajesNRF] = "probando SMS";
+      SerialBT.println("probandoSMS");
+      indiceMensajesNRF ++;
+      flagMensajePulsador = 0;
+    }
+  }
+  while (Serial.available() > 0) {
+    char c = Serial.read();
+
+    // Start of a new packet: clear any stale text
+    if (c == '#') {
+      trama = "#";
+    }
+    // Capturing body characters
+    else if (trama.length() > 0) {
+      trama += c;
+
+      if (c == '*') {
+        trama.trim();
+        Serial.println(trama);
+        if (trama.startsWith("#1,")) {
+          mensajesNRFEMG[indiceMensajesNRFEMG] = trama;
+          indiceMensajesNRFEMG ++;
+        } else {
+          mensajesNRFTR[indiceMensajesNRFTR] = trama;
+          indiceMensajesNRFTR ++;
+        }
+        trama = "";
+      }
+    }
+  }
   lecturaEnergia();
 
   /* if(mensajesNRF.empty() != true){
@@ -534,6 +592,8 @@ void gestionarComandosGSM() {
         SerialBT.println("SIM800L Ready");
         bufferRespuesta = "";
         terminarGSMS = 1;
+        digitalWrite(PIN_LED1, LOW);
+        digitalWrite(PIN_LED2, LOW);
         pasoGSM = GSM_READY;
       }
       else if (bufferRespuesta.indexOf("ERROR") != -1){
@@ -593,12 +653,15 @@ bool verificarSenalSIM800L() {
               // RSSI entre 10 y 31 indica señal aceptable/buena
               if (rssi >= 10 && rssi <= 31) {
                 //SerialBT.println("HAY SEÑAL ESTABLE");
+                digitalWrite(PIN_LED2, HIGH);
                 resultado = true;
               } else {
                 //SerialBT.println("NO HAY SEÑAL ESTABLE");
+                digitalWrite(PIN_LED2, LOW);
               }
             }
           } else {
+            digitalWrite(PIN_LED2, LOW);
           }
 
           // Reiniciar para la próxima verificación
@@ -610,6 +673,7 @@ bool verificarSenalSIM800L() {
       // Paso 4: Control de Timeout si el SIM800L no responde
       if (tiempoComandos >= TIMEOUT) {
         SerialBT.println("TIMEOUT");
+        digitalWrite(PIN_LED2, LOW);
         SENAL = IDLE;
       }
       break;
@@ -643,6 +707,8 @@ void reiniciarSIM800L() {
   }
 }
 void IRAM_ATTR onTimer() {
+  tiempoLed1 += 1;
+  tiempoLed2 += 1;
   tiempoPulsador += 1;
   tiempoDelay += 1;
   timerSMS += 1;
