@@ -1,102 +1,227 @@
 #include <SPI.h>
 #include <RF24.h>
-#include <avr/interrupt.h>
+#include <stdint.h>
+#include <string.h>
 
-// --- Pin Definitions (ATTinyCore Arduino Pins) ---
-#define PIN_PULSADOR 0 // PA0
-#define PIN_LED      1 // PA1
-#define PIN_IRQ      2 // PA2 (Interrupt pin from NRF, optional)
-#define PIN_CE       2 // PA2 (Configured as CE in prompt)
-#define PIN_SCK      4 // PA4
-#define PIN_MISO     5 // PA5
-#define PIN_MOSI     6 // PA6
-#define PIN_CSN      7 // PA7
+// --------------------------------------
+// PINES ATtiny84A - ATtinyCore
+// --------------------------------------
+#define PIN_PULSADOR PIN_PB0
+#define PIN_LED PIN_PB1
+#define PIN_IRQ PIN_PB2
 
-// Initialize NRF24L01 radio using CE and CSN pins
+#define PIN_CSN PIN_PA7
+#define PIN_CE PIN_PA3
+
+// SPI por hardware:
+// MOSI = PA6
+// MISO = PA5
+// SCK  = PA4
+
 RF24 radio(PIN_CE, PIN_CSN);
 
-// Address through which modules communicate (5 bytes)
-const byte address[6] = "00001";
+// --------------------------------------
+// CONFIGURACION DE RADIO
+// --------------------------------------
+const uint64_t address = 0xF0F0F0F0E1LL;
 
-// Non-blocking timer variables
-volatile uint32_t timer_ms = 0; // Incremented every 1ms by Timer1 ISR
-uint32_t previous_tx_time = 0;
-const uint32_t TX_INTERVAL_MS = 1000; // Send message every 1000 ms
+const uint8_t CANAL_RF = 76;
 
-// Payload message
-const char message[] = "Hello ATtiny!";
+const uint32_t TIEMPO_REBOTE = 30;
+const uint32_t TIEMPO_TIMEOUT_TX = 100;
 
-// --- Timer1 Initialization (1ms ISR Tick) ---
-void initTimer1() {
-  cli(); // Disable global interrupts during setup
+// --------------------------------------
+// ESTADOS
+// --------------------------------------
+enum EstadoRadio : uint8_t {
+  RADIO_RX,
+  RADIO_TX
+};
 
-  // Set Timer1 to CTC (Clear Timer on Compare Match) Mode: WGM12 = 1
-  TCCR1A = 0;
-  TCCR1B = 0;
-  TCNT1  = 0;
+EstadoRadio estadoRadio = RADIO_RX;
 
-  // Set OCR1A for 1ms interrupt based on clock frequency
-  // Assuming standard 8 MHz internal clock with Prescaler 64:
-  // (8,000,000 / (64 * 1000)) - 1 = 124
-  OCR1A = 124;
+// --------------------------------------
+// VARIABLES
+// --------------------------------------
+char mensajeTX[32] = {};
+char mensajeRX[32] = {};
 
-  TCCR1B |= (1 << WGM12);  // Enable CTC mode
-  TCCR1B |= (1 << CS11) | (1 << CS10); // Prescaler = 64
-  TIMSK1 |= (1 << OCIE1A); // Enable Timer1 Compare Match A interrupt
+uint8_t contadorMensajes = 0;
 
-  sei(); // Enable global interrupts
-}
+bool botonAnterior = HIGH;
+bool botonEstable = HIGH;
 
-// --- Timer1 Interrupt Service Routine (Replaces ESP32 onTimer) ---
-ISR(TIM1_COMPA_vect) {
-  timer_ms++; // Increments once every 1 millisecond
-}
+uint32_t tiempoCambioBoton = 0;
+uint32_t tiempoInicioTX = 0;
 
-// Custom millis replacement relying on Timer1 tick
-uint32_t get_timer_ms() {
-  uint32_t ms;
-  cli(); // Atomic read to prevent corruption during ISR update
-  ms = timer_ms;
-  sei();
-  return ms;
-}
+bool radioInicializada = false;
 
+// --------------------------------------
+// INICIALIZACION
+// --------------------------------------
 void setup() {
-  pinMode(PIN_LED, OUTPUT);
   pinMode(PIN_PULSADOR, INPUT_PULLUP);
+  pinMode(PIN_LED, OUTPUT);
+  pinMode(PIN_IRQ, INPUT_PULLUP);
 
-  // Initialize hardware timer
-  initTimer1();
+  digitalWrite(PIN_LED, LOW);
 
-  // Initialize NRF24L01 module
-  if (radio.begin()) {
-    radio.openWritingPipe(address);
-    radio.setPALevel(RF24_PA_LOW); // Low power for ATtiny stabilization
-    radio.stopListening();         // Set as transmitter
-    
-    // Quick blink to signal NRF initialization success
+  radioInicializada = radio.begin();
+
+  if (!radioInicializada) {
     digitalWrite(PIN_LED, HIGH);
+    return;
+  }
+
+  radio.setChannel(76);
+  radio.setPALevel(RF24_PA_MIN);
+  radio.setAutoAck(false);
+  radio.disableDynamicPayloads();
+  radio.setPayloadSize(32);
+
+  radio.openWritingPipe(address);
+  radio.openReadingPipe(1, address);
+
+  radio.startListening();
+  /*if (radioInicializada) {
+    radio.setChannel(CANAL_RF);
+    radio.setDataRate(RF24_250KBPS);
+    radio.setPALevel(RF24_PA_LOW);
+
+    // Para una prueba sencilla sin ACK automatico.
+    radio.setAutoAck(false);
+
+    radio.disableDynamicPayloads();
+    radio.setPayloadSize(32);
+
+    radio.openWritingPipe(address);
+    radio.openReadingPipe(1, address);
+
+
+    radio.startListening();
+  } else {
+    // Error de inicializacion: LED encendido.
+    digitalWrite(PIN_LED, HIGH);
+  } */
+}
+
+// --------------------------------------
+// LOOP PRINCIPAL
+// --------------------------------------
+void loop() {
+  if (!radioInicializada) {
+    return;
+  }
+
+  gestionarPulsador();
+  gestionarRadio();
+}
+
+// --------------------------------------
+// DETECCION DE PULSACION
+// --------------------------------------
+void gestionarPulsador() {
+  bool lectura = digitalRead(PIN_PULSADOR);
+
+  if (lectura != botonAnterior) {
+    botonAnterior = lectura;
+    tiempoCambioBoton = millis();
+  }
+
+  if ((uint32_t)(millis() - tiempoCambioBoton) >= TIEMPO_REBOTE) {
+    if (lectura != botonEstable) {
+      botonEstable = lectura;
+
+      // Detectar solo el flanco de pulsacion.
+      if (botonEstable == LOW && estadoRadio == RADIO_RX) {
+        prepararTransmision();
+      }
+    }
   }
 }
 
-void loop() {
-  uint32_t current_time = get_timer_ms();
+// --------------------------------------
+// PREPARAR Y COMENZAR TRANSMISION
+// --------------------------------------
+void prepararTransmision() {
+  contadorMensajes++;
 
-  // Send payload periodically every 1 second without blocking delay()
-  if (current_time - previous_tx_time >= TX_INTERVAL_MS) {
-    previous_tx_time = current_time;
+  memset(mensajeTX, 0, sizeof(mensajeTX));
 
-    // Pulse LED during transmit
-    digitalWrite(PIN_LED, HIGH);
-    
-    // Transmit message over NRF
-    bool success = radio.write(&message, sizeof(message));
-    
-    digitalWrite(PIN_LED, LOW);
+  // Ejemplo: AT84:1, AT84:2...
+  mensajeTX[0] = 'A';
+  mensajeTX[1] = 'T';
+  mensajeTX[2] = '8';
+  mensajeTX[3] = '4';
+  mensajeTX[4] = ':';
+
+  uint8_t valor = contadorMensajes;
+  uint8_t posicion = 5;
+
+  // Convertir contador a texto sin sprintf.
+  if (valor >= 100) {
+    mensajeTX[posicion++] = '0' + valor / 100;
+    valor %= 100;
   }
 
-  // Handle immediate button interaction non-blockingly
-  if (digitalRead(PIN_PULSADOR) == LOW) {
-    // Optional instant send trigger on button press
+  if (valor >= 10 || posicion > 5) {
+    mensajeTX[posicion++] = '0' + valor / 10;
+    valor %= 10;
+  }
+
+  mensajeTX[posicion++] = '0' + valor;
+
+  radio.stopListening();
+
+  estadoRadio = RADIO_TX;
+  tiempoInicioTX = millis();
+
+  // Iniciar TX sin esperar su finalizacion.
+  radio.startWrite(mensajeTX, sizeof(mensajeTX), false);
+}
+
+// --------------------------------------
+// GESTION DE TRANSMISION Y RECEPCION
+// --------------------------------------
+void gestionarRadio() {
+  if (estadoRadio == RADIO_TX) {
+    bool tx_ok = false;
+    bool tx_fail = false;
+    bool tx_ds = false;
+
+    // Consulta y limpieza de flags IRQ del NRF.
+    radio.whatHappened(tx_ok, tx_fail, tx_ds);
+
+    if (tx_ds || tx_ok || tx_fail || (uint32_t)(millis() - tiempoInicioTX) >= TIEMPO_TIMEOUT_TX) {
+
+      radio.startListening();
+      estadoRadio = RADIO_RX;
+    }
+
+    return;
+  }
+
+  // Leer como maximo un paquete por iteracion.
+  if (radio.available()) {
+    memset(mensajeRX, 0, sizeof(mensajeRX));
+    radio.read(mensajeRX, sizeof(mensajeRX));
+
+    procesarMensaje(mensajeRX);
+  }
+}
+
+// --------------------------------------
+// PROCESAR MENSAJE RECIBIDO
+// --------------------------------------
+void procesarMensaje(const char *mensaje) {
+  // LED encendido al recibir un mensaje.
+  // En este ejemplo queda encendido hasta el
+  // siguiente cambio de estado de la aplicacion.
+  digitalWrite(PIN_LED, HIGH);
+
+  // Agregar aqui la logica de tu aplicacion.
+  // Ejemplo: reconocer mensajes "ESP32:OK".
+  if (strcmp(mensaje, "ESP32:OK") == 0) {
+    digitalWrite(PIN_LED, LOW);
   }
 }
