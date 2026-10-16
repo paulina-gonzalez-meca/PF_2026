@@ -116,6 +116,7 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
 void setup() {
   TFT_DISPLAY = INICIO;
+  SPI.begin(TFT_CLK, TFT_MISO, TFT_MOSI);
   Serial.begin(9600);
   tft.begin();
   ledcAttachChannel(TFT_BL, 5000, 8, 0);
