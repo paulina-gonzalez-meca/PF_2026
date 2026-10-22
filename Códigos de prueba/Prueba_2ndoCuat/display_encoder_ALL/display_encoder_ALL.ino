@@ -2,16 +2,16 @@
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
 
-#define TFT_DC 2
-#define TFT_CS 22
-#define TFT_MOSI 23
-#define TFT_CLK 18
-#define TFT_RST 4
-#define TFT_MISO 19
-#define TFT_BL 21
-#define ENCODER_A_PIN 34
-#define ENCODER_B_PIN 35
-#define ENCODER_SW_PIN 15
+#define TFT_DC 14
+#define TFT_CS 32
+#define TFT_MOSI 2
+#define TFT_CLK 17
+#define TFT_RST 27
+#define TFT_MISO 16
+#define TFT_BL 12
+#define ENCODER_A_PIN 25
+#define ENCODER_B_PIN 26
+#define ENCODER_SW_PIN 39
 #define TIEMPO_DEBOUNCE 200
 #define TIEMPO_PARPADEO 500
 #define TIMEOUT_AGREGAR 1000
@@ -119,14 +119,17 @@ void setup() {
   SPI.begin(TFT_CLK, TFT_MISO, TFT_MOSI);
   Serial.begin(9600);
   tft.begin();
-  ledcAttachChannel(TFT_BL, 5000, 8, 0);
-  ledcWriteChannel(TFT_BL, 200);
+  // ledcAttachChannel(TFT_BL, 5000, 8, 0);
+  // ledcWriteChannel(TFT_BL, 200);
   tft.setRotation(3);
   tft.fillScreen(ILI9341_BLACK);
 
   pinMode(ENCODER_A_PIN, INPUT);
   pinMode(ENCODER_B_PIN, INPUT);
   pinMode(ENCODER_SW_PIN, INPUT_PULLUP);
+
+  pinMode(TFT_BL, OUTPUT);
+  digitalWrite(TFT_BL, HIGH);
 
   attachInterrupt(digitalPinToInterrupt(ENCODER_A_PIN), rotacionEncoder, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ENCODER_SW_PIN), botonEncoder, FALLING);
