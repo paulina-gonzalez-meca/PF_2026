@@ -1,4 +1,4 @@
-#include <SPI.h>
+
 #include <RF24.h>
 #include <stdint.h>
 #include <string.h>
@@ -7,21 +7,21 @@
 // PINES ATtiny84A - ATtinyCore
 // --------------------------------------
 #define PIN_PULSADOR PIN_PB0
-#define PIN_LED PIN_PB1
-#define PIN_IRQ PIN_PB2
+#define PIN_LED      PIN_PB1
 
-#define PIN_CSN PIN_PA7
-#define PIN_CE PIN_PA3
+#define PIN_CSN      PIN_PA7
+#define PIN_CE       PIN_PA3
 
-// SPI por hardware:
+// SPI por hardware del ATtiny84A:
 // MOSI = PA6
 // MISO = PA5
 // SCK  = PA4
 
-RF24 radio(PIN_CE, PIN_CSN);
+// SPI a 1 MHz para mejorar la compatibilidad
+RF24 radio(PIN_CE, PIN_CSN, 1000000);
 
 // --------------------------------------
-// CONFIGURACION DE RADIO
+// CONFIGURACION NRF24L01
 // --------------------------------------
 const uint64_t address = 0xF0F0F0F0E1LL;
 
@@ -29,88 +29,116 @@ const uint8_t CANAL_RF = 76;
 
 const uint32_t TIEMPO_REBOTE = 30;
 const uint32_t TIEMPO_TIMEOUT_TX = 100;
+const uint32_t TIEMPO_REINTENTO = 1000;
 
 // --------------------------------------
 // ESTADOS
 // --------------------------------------
 enum EstadoRadio : uint8_t {
+  RADIO_INICIALIZANDO,
   RADIO_RX,
   RADIO_TX
 };
 
-EstadoRadio estadoRadio = RADIO_RX;
+EstadoRadio estadoRadio = RADIO_INICIALIZANDO;
 
 // --------------------------------------
 // VARIABLES
 // --------------------------------------
 char mensajeTX[32] = {};
-char mensajeRX[32] = {};
 
 uint8_t contadorMensajes = 0;
 
 bool botonAnterior = HIGH;
 bool botonEstable = HIGH;
 
+bool radioInicializada = false;
+bool ledError = false;
+
 uint32_t tiempoCambioBoton = 0;
 uint32_t tiempoInicioTX = 0;
-
-bool radioInicializada = false;
+uint32_t tiempoUltimoIntento = 0;
+uint32_t tiempoLed = 0;
 
 // --------------------------------------
-// INICIALIZACION
+// INICIALIZAR RADIO
 // --------------------------------------
-void setup() {
-  pinMode(PIN_PULSADOR, INPUT_PULLUP);
-  pinMode(PIN_LED, OUTPUT);
-  pinMode(PIN_IRQ, INPUT_PULLUP);
+bool inicializarRadio() {
+  digitalWrite(PIN_CSN, HIGH);
+  digitalWrite(PIN_CE, LOW);
 
-  digitalWrite(PIN_LED, LOW);
-
-  radioInicializada = radio.begin();
-
-  if (!radioInicializada) {
-    digitalWrite(PIN_LED, HIGH);
-    return;
+  if (!radio.begin()) {
+    return false;
   }
 
-  radio.setChannel(76);
+  radio.setChannel(CANAL_RF);
+  radio.setDataRate(RF24_1MBPS);
   radio.setPALevel(RF24_PA_MIN);
   radio.setAutoAck(false);
+
   radio.disableDynamicPayloads();
   radio.setPayloadSize(32);
 
   radio.openWritingPipe(address);
   radio.openReadingPipe(1, address);
 
+  radio.flush_tx();
+  radio.flush_rx();
+
   radio.startListening();
-  /*if (radioInicializada) {
-    radio.setChannel(CANAL_RF);
-    radio.setDataRate(RF24_250KBPS);
-    radio.setPALevel(RF24_PA_LOW);
 
-    // Para una prueba sencilla sin ACK automatico.
-    radio.setAutoAck(false);
-
-    radio.disableDynamicPayloads();
-    radio.setPayloadSize(32);
-
-    radio.openWritingPipe(address);
-    radio.openReadingPipe(1, address);
-
-
-    radio.startListening();
-  } else {
-    // Error de inicializacion: LED encendido.
-    digitalWrite(PIN_LED, HIGH);
-  } */
+  return true;
 }
 
 // --------------------------------------
-// LOOP PRINCIPAL
+// SETUP
+// --------------------------------------
+void setup() {
+  pinMode(PIN_PULSADOR, INPUT_PULLUP);
+  pinMode(PIN_LED, OUTPUT);
+
+  pinMode(PIN_CE, OUTPUT);
+  pinMode(PIN_CSN, OUTPUT);
+
+  digitalWrite(PIN_LED, LOW);
+  digitalWrite(PIN_CE, LOW);
+  digitalWrite(PIN_CSN, HIGH);
+
+  // El primer intento se realizará en loop().
+  tiempoUltimoIntento = millis() - TIEMPO_REINTENTO;
+}
+
+// --------------------------------------
+// LOOP
 // --------------------------------------
 void loop() {
+  uint32_t ahora = millis();
+
+  // Reintentar inicialización si falla.
   if (!radioInicializada) {
-    return;
+    if ((uint32_t)(ahora - tiempoUltimoIntento)
+        >= TIEMPO_REINTENTO) {
+
+      tiempoUltimoIntento = ahora;
+
+      radioInicializada = inicializarRadio();
+
+      if (radioInicializada) {
+        estadoRadio = RADIO_RX;
+        digitalWrite(PIN_LED, LOW);
+      }
+    }
+
+    // LED intermitente = radio sin inicializar.
+    if (!radioInicializada) {
+      if ((uint32_t)(ahora - tiempoLed) >= 250) {
+        tiempoLed = ahora;
+        ledError = !ledError;
+        digitalWrite(PIN_LED, ledError);
+      }
+
+      return;
+    }
   }
 
   gestionarPulsador();
@@ -118,21 +146,24 @@ void loop() {
 }
 
 // --------------------------------------
-// DETECCION DE PULSACION
+// DETECCION DEL PULSADOR
 // --------------------------------------
 void gestionarPulsador() {
   bool lectura = digitalRead(PIN_PULSADOR);
+  uint32_t ahora = millis();
 
   if (lectura != botonAnterior) {
     botonAnterior = lectura;
-    tiempoCambioBoton = millis();
+    tiempoCambioBoton = ahora;
   }
 
-  if ((uint32_t)(millis() - tiempoCambioBoton) >= TIEMPO_REBOTE) {
+  if ((uint32_t)(ahora - tiempoCambioBoton)
+      >= TIEMPO_REBOTE) {
+
     if (lectura != botonEstable) {
       botonEstable = lectura;
 
-      // Detectar solo el flanco de pulsacion.
+      // Una transmisión por cada pulsación nueva.
       if (botonEstable == LOW && estadoRadio == RADIO_RX) {
         prepararTransmision();
       }
@@ -141,14 +172,14 @@ void gestionarPulsador() {
 }
 
 // --------------------------------------
-// PREPARAR Y COMENZAR TRANSMISION
+// PREPARAR TRANSMISION
 // --------------------------------------
 void prepararTransmision() {
   contadorMensajes++;
 
   memset(mensajeTX, 0, sizeof(mensajeTX));
 
-  // Ejemplo: AT84:1, AT84:2...
+  // Mensajes: AT84:1, AT84:2, AT84:3...
   mensajeTX[0] = 'A';
   mensajeTX[1] = 'T';
   mensajeTX[2] = '8';
@@ -158,7 +189,6 @@ void prepararTransmision() {
   uint8_t valor = contadorMensajes;
   uint8_t posicion = 5;
 
-  // Convertir contador a texto sin sprintf.
   if (valor >= 100) {
     mensajeTX[posicion++] = '0' + valor / 100;
     valor %= 100;
@@ -176,12 +206,12 @@ void prepararTransmision() {
   estadoRadio = RADIO_TX;
   tiempoInicioTX = millis();
 
-  // Iniciar TX sin esperar su finalizacion.
+  // Iniciar transmisión sin esperar.
   radio.startWrite(mensajeTX, sizeof(mensajeTX), false);
 }
 
 // --------------------------------------
-// GESTION DE TRANSMISION Y RECEPCION
+// GESTION DE RADIO
 // --------------------------------------
 void gestionarRadio() {
   if (estadoRadio == RADIO_TX) {
@@ -189,10 +219,11 @@ void gestionarRadio() {
     bool tx_fail = false;
     bool tx_ds = false;
 
-    // Consulta y limpieza de flags IRQ del NRF.
     radio.whatHappened(tx_ok, tx_fail, tx_ds);
 
-    if (tx_ds || tx_ok || tx_fail || (uint32_t)(millis() - tiempoInicioTX) >= TIEMPO_TIMEOUT_TX) {
+    if (tx_ds || tx_ok || tx_fail ||
+        (uint32_t)(millis() - tiempoInicioTX)
+          >= TIEMPO_TIMEOUT_TX) {
 
       radio.startListening();
       estadoRadio = RADIO_RX;
@@ -201,27 +232,12 @@ void gestionarRadio() {
     return;
   }
 
-  // Leer como maximo un paquete por iteracion.
   if (radio.available()) {
-    memset(mensajeRX, 0, sizeof(mensajeRX));
+    char mensajeRX[32] = {};
+
     radio.read(mensajeRX, sizeof(mensajeRX));
 
-    procesarMensaje(mensajeRX);
-  }
-}
-
-// --------------------------------------
-// PROCESAR MENSAJE RECIBIDO
-// --------------------------------------
-void procesarMensaje(const char *mensaje) {
-  // LED encendido al recibir un mensaje.
-  // En este ejemplo queda encendido hasta el
-  // siguiente cambio de estado de la aplicacion.
-  digitalWrite(PIN_LED, HIGH);
-
-  // Agregar aqui la logica de tu aplicacion.
-  // Ejemplo: reconocer mensajes "ESP32:OK".
-  if (strcmp(mensaje, "ESP32:OK") == 0) {
-    digitalWrite(PIN_LED, LOW);
+    // Indicador de recepción.
+    digitalWrite(PIN_LED, HIGH);
   }
 }
