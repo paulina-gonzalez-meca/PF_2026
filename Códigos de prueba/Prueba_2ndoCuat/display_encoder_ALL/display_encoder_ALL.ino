@@ -112,7 +112,7 @@ void IRAM_ATTR botonEncoder();
 int displayLetras(char nombre[], int &indiceNombre);
 int displayNum(char numero[], int &indiceNumero);
 
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST, 1000000);
 
 void setup() {
   TFT_DISPLAY = INICIO;
@@ -126,7 +126,7 @@ void setup() {
 
   pinMode(ENCODER_A_PIN, INPUT);
   pinMode(ENCODER_B_PIN, INPUT);
-  pinMode(ENCODER_SW_PIN, INPUT_PULLUP);
+  pinMode(ENCODER_SW_PIN, INPUT);
 
   pinMode(TFT_BL, OUTPUT);
   digitalWrite(TFT_BL, HIGH);
