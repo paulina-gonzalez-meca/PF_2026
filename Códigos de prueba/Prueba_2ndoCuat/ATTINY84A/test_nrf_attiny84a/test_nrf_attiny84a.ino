@@ -125,7 +125,7 @@ void loop() {
 
       if (radioInicializada) {
         estadoRadio = RADIO_RX;
-        digitalWrite(PIN_LED, LOW);
+        digitalWrite(PIN_LED, HIGH);
       }
     }
 
