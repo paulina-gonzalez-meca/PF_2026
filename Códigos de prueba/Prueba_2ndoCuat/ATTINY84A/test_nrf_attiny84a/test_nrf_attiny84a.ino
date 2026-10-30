@@ -72,8 +72,8 @@ bool inicializarRadio() {
   }
 
   radio.setChannel(CANAL_RF);
-  radio.setDataRate(RF24_1MBPS);
-  radio.setPALevel(RF24_PA_MIN);
+  radio.setDataRate(RF24_250KBPS);
+  radio.setPALevel(RF24_PA_MAX);
   radio.setAutoAck(false);
 
   radio.disableDynamicPayloads();
