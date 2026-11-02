@@ -36,6 +36,6 @@ void loop() {
     memset(receivedMessage, 0, sizeof(receivedMessage));
     radio.read(&receivedMessage, sizeof(receivedMessage));
     msg = String(receivedMessage);
-    Serial.println("Message received:" + msg);
+    // Serial.println("Message received:" + msg);
   }
 }
