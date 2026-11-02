@@ -32,7 +32,7 @@ void setup() {
   digitalWrite(PIN_LED, HIGH);
 
   // Initialize nRF24L01
-  radioReady = radio.begin();
+  radio.begin();
 
   // Explicit shared configuration
   radio.setChannel(CANAL_RF);

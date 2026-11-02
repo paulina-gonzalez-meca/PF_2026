@@ -1,82 +1,49 @@
- // Código de prueba NRF ATTINY. Recibe mensaje, y transmite lo recibido.
- 
+
+// ATtiny84A - NRF24L01 ECHO
+// Non-blocking RX -> WAIT_TX -> TX -> RX
+
 #include <SPI.h>
 #include <RF24.h>
 #include <stdint.h>
-#include <string.h>
 
-// ==========================================
-// ATtiny84A - NRF24L01 NON-BLOCKING RELAY
-// ATtinyCore
-// ==========================================
-
-// PIN CONFIGURATION
 #define CE_PIN PIN_PA3
 #define CSN_PIN PIN_PA7
 #define PIN_LED PIN_PB1
-#define PIN_IRQ PIN_PB2
 
 RF24 radio(CE_PIN, CSN_PIN, 1000000);
 
-// ==========================================
-// RADIO CONFIGURATION
-// ==========================================
-
-const uint64_t INCOMING_ADDRESS = 0xF0F0F0F0E1LL;
-const uint64_t FORWARD_ADDRESS = 0xF0F0F0F0E2LL;
+const uint64_t RX_ADDRESS = 0xF0F0F0F0E1LL;
+const uint64_t TX_ADDRESS = 0xF0F0F0F0E2LL;
 
 const uint8_t CANAL_RF = 76;
 const uint8_t PAYLOAD_SIZE = 32;
 
-// ==========================================
-// STATE MACHINE
-// ==========================================
-
-enum estadosNRF {
+enum RadioState {
   RX,
+  WAIT_TX,
   TX
-} estadosNRF_t;
+};
 
-estadosNRF NRF = RX;
-
-// ==========================================
-// MESSAGE BUFFER
-// ==========================================
+RadioState state = RX;
 
 uint8_t messageBuffer[PAYLOAD_SIZE];
 
-// ==========================================
-// LED TIMER
-// ==========================================
-
-unsigned long ledTimer = 0;
-const unsigned long LED_TIME = 150;
-
-// ==========================================
-// TRANSMISSION TIMER
-// ==========================================
-
 unsigned long txTimer = 0;
-const unsigned long TX_TIMEOUT = 100;
+unsigned long ledTimer = 0;
 
-// ==========================================
-// SETUP
-// ==========================================
+const unsigned long TX_DELAY = 3;
+const unsigned long LED_TIME = 150;
 
 void setup() {
 
   pinMode(PIN_LED, OUTPUT);
-  pinMode(PIN_IRQ, INPUT_PULLUP);
-
   digitalWrite(PIN_LED, LOW);
 
-  // Begin radio
   radio.begin();
 
-  // Shared radio configuration
   radio.setChannel(CANAL_RF);
   radio.setDataRate(RF24_1MBPS);
-  radio.setPALevel(RF24_PA_LOW);
+  radio.setPALevel(RF24_PA_MIN);
 
   radio.setAutoAck(false);
 
@@ -86,91 +53,80 @@ void setup() {
   radio.setAddressWidth(5);
   radio.setCRCLength(RF24_CRC_16);
 
-  // Configure incoming and outgoing addresses
-  radio.openReadingPipe(1, INCOMING_ADDRESS);
-  radio.openWritingPipe(FORWARD_ADDRESS);
+  radio.openReadingPipe(1, RX_ADDRESS);
+  radio.openWritingPipe(TX_ADDRESS);
 
-  // Enable only RX_DR interrupt
-  radio.maskIRQ(true, true, false);
+  radio.maskIRQ(false, false, false);
 
-  // Start receiving
-  radio.startListening();
   digitalWrite(PIN_LED, HIGH);
+  radio.stopListening();
+  radio.startWrite("HELLO FROM ATTINY", PAYLOAD_SIZE, false);
+  radio.startListening();
 }
-
-// ==========================================
-// MAIN LOOP
-// ==========================================
 
 void loop() {
 
-  // Función de NRF con máquina de estados.
-  nrf();
+  // --------------------------------
+  // RX
+  // --------------------------------
 
- 
- // Controlar el estado del LED.
+  if (state == RX) {
+
+    if (radio.available()) {
+
+      radio.read(messageBuffer, PAYLOAD_SIZE);
+
+      digitalWrite(PIN_LED, HIGH);
+      ledTimer = millis();
+
+      radio.stopListening();
+
+      txTimer = millis();
+      state = WAIT_TX;
+    }
+  }
+
+  // --------------------------------
+  // WAIT BEFORE TRANSMISSION
+  // --------------------------------
+
+  if (state == WAIT_TX) {
+
+    if (millis() - txTimer >= TX_DELAY) {
+
+      // Clear previous interrupt flags
+      bool tx_ok, tx_fail, rx_ready;
+      radio.whatHappened(tx_ok, tx_fail, rx_ready);
+
+      radio.startWrite(messageBuffer, PAYLOAD_SIZE, false);
+
+      state = TX;
+    }
+  }
+
+  // --------------------------------
+  // TX
+  // --------------------------------
+
+  if (state == TX) {
+
+    bool tx_ok, tx_fail, rx_ready;
+
+    radio.whatHappened(tx_ok, tx_fail, rx_ready);
+
+    if (tx_ok) {
+      radio.startListening();
+
+      state = RX;
+    }
+  }
+
+  // --------------------------------
+  // LED
+  // --------------------------------
+
   if (digitalRead(PIN_LED) == HIGH && millis() - ledTimer >= LED_TIME) {
 
     digitalWrite(PIN_LED, LOW);
-  }
-}
-
-
-void nrf() {
-
-  switch (NRF) {
-
-    case RX:
-      if (radio.available()) {
-
-        // Read received packet
-        radio.read(messageBuffer, PAYLOAD_SIZE);
-
-        // LED reception indicator
-        digitalWrite(PIN_LED, HIGH);
-        ledTimer = millis();
-
-        // Switch to transmission mode
-        radio.stopListening();
-
-        // Start asynchronous transmission
-        radio.startWrite(messageBuffer, PAYLOAD_SIZE, false);
-
-        txTimer = millis();
-
-        NRF = TX;
-      }
-
-      break;
-
-    case TX:
-      bool tx_ok = false;
-      bool tx_fail = false;
-      bool rx_ready = false;
-
-      // Check transmission status without waiting
-      radio.whatHappened(tx_ok, tx_fail, rx_ready);
-
-      if (tx_ok || tx_fail) {
-
-        // Return to receiving mode
-
-        radio.startListening();
-
-        NRF = RX;
-      }
-
-      // Transmission failsafe timeout
-      else if (millis() - txTimer >= TX_TIMEOUT) {
-
-        radio.stopListening();
-        radio.flush_tx();
-
-        radio.startListening();
-
-        NRF = RX;
-      }
-
-      break;
   }
 }
