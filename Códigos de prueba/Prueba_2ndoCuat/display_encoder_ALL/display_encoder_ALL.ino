@@ -20,7 +20,7 @@
 
 class per {
 public:
-  String nombreInterno;
+  char nombreInterno[4] = { "" };
   char nombreExterno[5] = { "-" };
   char nombreSensor1[5] = { "1" };
   char nombreSensor2[5] = { "2" };
@@ -34,7 +34,7 @@ public:
   bool alertaS2[20] = { 0 };
   bool alertaS1[20] = { 0 };
   per() {
-    nombreInterno = "nombrePeriferico";
+    nombreInterno;
     nombreExterno;
     nombreSensor1;
     nombreSensor2;
@@ -56,12 +56,11 @@ int ultimoValorDT = 0;
 volatile int debounceSWEncoder = 0;
 volatile int tiempoAgregarPer = 0;
 volatile int parpadeo = 0;
-int valorDisplay = 0;
+int valorDisplay = 1;
 int modificarUsuario = 0;
 int modificarPer = 0;
 int eliminar = 0;
 bool seleccionar = 0;
-bool cambioEncoder = 0;
 bool flagSWEncoder = 0;
 
 per perifericos[20];
@@ -112,15 +111,13 @@ void IRAM_ATTR botonEncoder();
 int displayLetras(char nombre[], int &indiceNombre);
 int displayNum(char numero[], int &indiceNumero);
 
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST, 1000000);
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
 void setup() {
   TFT_DISPLAY = INICIO;
   SPI.begin(TFT_CLK, TFT_MISO, TFT_MOSI);
   Serial.begin(9600);
   tft.begin();
-  // ledcAttachChannel(TFT_BL, 5000, 8, 0);
-  // ledcWriteChannel(TFT_BL, 200);
   tft.setRotation(3);
   tft.fillScreen(ILI9341_BLACK);
 
@@ -184,7 +181,7 @@ void display() {
   switch (TFT_DISPLAY) {
     case INICIO:
       if (flagSWEncoder) {
-        if (valorDisplay % 2 != 0) {
+        if (valorDisplay == 1) {
           tft.fillScreen(ILI9341_BLACK);
           if (indicePerifericos >= 1) {
             tft.setCursor(10, 10);
@@ -272,7 +269,7 @@ void display() {
           TFT_DISPLAY = USUARIO;
         }
         flagSWEncoder = 0;
-      } else if (valorDisplay % 2 == 0) {
+      } else if (valorDisplay == 1) {
         if (parpadeo >= TIEMPO_PARPADEO) {
           if (seleccionar) {
             tft.setCursor(10, 10);
@@ -290,15 +287,15 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 0, 20) % 2 != 0) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 10);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(4);
           tft.print("USUARIOS");
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 0, 20);
-          cambioEncoder = 0;
+          valorEncoder = 0;
+          valorDisplay = 2;
         }
       } else {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -318,15 +315,15 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 0, 20) % 2 == 0) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 70);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(4);
           tft.print("PERIFERICOS");
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 0, 20);
+          valorEncoder = 0;
+          valorDisplay = 1;
         }
       }
       break;
@@ -405,7 +402,7 @@ void display() {
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(4);
           tft.print("PERIFERICOS");
-          valorDisplay = 0;
+          valorDisplay = 1;
           valorEncoder = 0;
           flagSWEncoder = 0;
           TFT_DISPLAY = INICIO;
@@ -429,15 +426,23 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indiceUsuario + 2)) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 10);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(usuario[valorDisplay - 1].nombreUs);
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indiceUsuario + 2);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else if(valorDisplay == 1){
+            valorDisplay  == indiceUsuario + 2;
+          }
+          else{
+            valorDisplay --;
+          }
           if (valorDisplay <= indiceUsuario && (valorDisplay == 5 || valorDisplay == 10 || valorDisplay == 15 || valorDisplay == 20)) {
             tft.fillScreen(ILI9341_BLACK);
             tft.setCursor(10, 10);
@@ -488,15 +493,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indiceUsuario + 2)) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 35);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(usuario[valorDisplay - 1].nombreUs);
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indiceUsuario + 2);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       } else if (valorDisplay <= indiceUsuario && (valorDisplay == 3 || valorDisplay == 8 || valorDisplay == 13 || valorDisplay == 18)) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -516,15 +526,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indiceUsuario + 2)) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 60);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(usuario[valorDisplay - 1].nombreUs);
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indiceUsuario + 2);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       } else if (valorDisplay <= indiceUsuario && (valorDisplay == 4 || valorDisplay == 9 || valorDisplay == 14 || valorDisplay == 19)) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -544,15 +559,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indiceUsuario + 2)) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 85);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(usuario[valorDisplay - 1].nombreUs);
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indiceUsuario + 2);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       } else if (valorDisplay <= indiceUsuario && (valorDisplay == 5 || valorDisplay == 10 || valorDisplay == 15 || valorDisplay == 20)) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -572,15 +592,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indiceUsuario + 2)) {
-          cambioEncoder = 0;
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
+          valorEncoder = 0;
           tft.setCursor(10, 110);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(usuario[valorDisplay - 1].nombreUs);
-          valorDisplay = map(valorEncoder, 0, 80, 1, indiceUsuario + 2);
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
           if (valorDisplay <= indiceUsuario && (valorDisplay == 1 || valorDisplay == 6 || valorDisplay == 11 || valorDisplay == 16)) {
             tft.fillScreen(ILI9341_BLACK);
             tft.setCursor(10, 10);
@@ -639,15 +664,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indiceUsuario + 2)) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 135);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print("Agregar");
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indiceUsuario + 2);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
           if (valorDisplay <= indiceUsuario && (valorDisplay == 5 || valorDisplay == 10 || valorDisplay == 15 || valorDisplay == 20)) {
             tft.fillScreen(ILI9341_BLACK);
             tft.setCursor(10, 10);
@@ -778,11 +808,19 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indiceUsuario + 2)) {
-          cambioEncoder = 0;
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indiceUsuario + 2);
+          valorEncoder = 0;
+          if(valorEncoder <= -1){
+            valorDisplay --;
+          }
+          else if(valorDisplay == indiceUsuario + 2){
+            valorDisplay  = 1;
+          }
+          else{
+            valorDisplay ++;
+          }
           if (valorDisplay <= indiceUsuario) {
             tft.fillScreen(ILI9341_BLACK);
             tft.setCursor(10, 10);
@@ -955,15 +993,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 1, 3) != 1) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 35);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(usuario[modificarUsuario].nombreUs);
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, 3);
-          cambioEncoder = 0;
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay = 3;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       } else if (valorDisplay == 2) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -984,15 +1027,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 1, 3) != 2) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 85);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(usuario[modificarUsuario].numeroUs);
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, 3);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       } else if (valorDisplay == 3) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -1012,15 +1060,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 1, 3) != 3) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 110);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print("Volver");
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, 3);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay = 1;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       }
       break;
@@ -1310,7 +1363,7 @@ void display() {
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(4);
           tft.print("PERIFERICOS");
-          valorDisplay = 0;
+          valorDisplay = 1;
           valorEncoder = 0;
           flagSWEncoder = 0;
           TFT_DISPLAY = INICIO;
@@ -1334,15 +1387,23 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indicePerifericos + 2)) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 10);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(perifericos[valorDisplay - 1].nombreExterno);
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indicePerifericos + 2);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else if(valorDisplay == 1){
+            valorDisplay  = indicePerifericos + 2;
+          }
+          else{
+            valorDisplay --;
+          }
           if (valorDisplay <= indicePerifericos && (valorDisplay == 5 || valorDisplay == 10 || valorDisplay == 15 || valorDisplay == 20)) {
             tft.fillScreen(ILI9341_BLACK);
             tft.setCursor(10, 10);
@@ -1393,15 +1454,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indicePerifericos + 2)) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 35);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(perifericos[valorDisplay - 1].nombreExterno);
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indicePerifericos + 2);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       } else if (valorDisplay <= indicePerifericos && (valorDisplay == 3 || valorDisplay == 8 || valorDisplay == 13 || valorDisplay == 18)) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -1421,15 +1487,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indicePerifericos + 2)) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 60);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(perifericos[valorDisplay - 1].nombreExterno);
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indicePerifericos + 2);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       } else if (valorDisplay <= indicePerifericos && (valorDisplay == 4 || valorDisplay == 9 || valorDisplay == 14 || valorDisplay == 19)) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -1449,15 +1520,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indicePerifericos + 2)) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 85);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(perifericos[valorDisplay - 1].nombreExterno);
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indicePerifericos + 2);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       } else if (valorDisplay <= indicePerifericos && (valorDisplay == 5 || valorDisplay == 10 || valorDisplay == 15 || valorDisplay == 20)) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -1477,15 +1553,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indicePerifericos + 2)) {
-          cambioEncoder = 0;
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
+          valorEncoder = 0;
           tft.setCursor(10, 110);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(perifericos[valorDisplay - 1].nombreExterno);
-          valorDisplay = map(valorEncoder, 0, 80, 1, indicePerifericos + 2);
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
           if (valorDisplay <= indicePerifericos && (valorDisplay == 1 || valorDisplay == 6 || valorDisplay == 11 || valorDisplay == 16)) {
             tft.fillScreen(ILI9341_BLACK);
             tft.setCursor(10, 10);
@@ -1544,15 +1625,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indicePerifericos + 2)) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 135);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print("Agregar");
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indicePerifericos + 2);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
           if (valorDisplay <= indicePerifericos && (valorDisplay == 5 || valorDisplay == 10 || valorDisplay == 15 || valorDisplay == 20)) {
             tft.fillScreen(ILI9341_BLACK);
             tft.setCursor(10, 10);
@@ -1683,11 +1769,19 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indicePerifericos + 2)) {
-          cambioEncoder = 0;
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indicePerifericos + 2);
+          valorEncoder = 0;
+          if(valorEncoder <= -1){
+            valorDisplay --;
+          }
+          else if(valorDisplay == indicePerifericos + 2){
+            valorDisplay  = 1;
+          }
+          else{
+            valorDisplay ++;
+          }
           if (valorDisplay <= indicePerifericos) {
             tft.fillScreen(ILI9341_BLACK);
             tft.setCursor(10, 10);
@@ -1867,15 +1961,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 1, 3) != 1) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 110);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print("Volver");
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, 3);
-          cambioEncoder = 0;
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay = 3;
+          }
         }
       } else if (valorDisplay == 2) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -1895,15 +1994,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 1, 3) != 2) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 135);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print("Editar");
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, 3);
-          cambioEncoder = 0;
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       } else if (valorDisplay == 3) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -1923,15 +2027,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 1, 3) != 3) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 160);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print("Eliminar");
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, 3);
-          cambioEncoder = 0;
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay = 1;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       }
       break;
@@ -2166,7 +2275,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 1, 8) != 1) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 35);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2174,8 +2283,13 @@ void display() {
           tft.print(perifericos[modificarPer].nombreExterno);
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, 8);
-          cambioEncoder = 0;
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay = 8;
+          }
         }
       }else if (valorDisplay == 2) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -2197,7 +2311,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 1, 8) != 2) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 60);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2205,8 +2319,13 @@ void display() {
           tft.print(perifericos[modificarPer].nombreSensor1);
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, 8);
-          cambioEncoder = 0;
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       }else if (valorDisplay == 3) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -2228,7 +2347,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 1, 8) != 3) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 85);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2236,8 +2355,13 @@ void display() {
           tft.print(perifericos[modificarPer].nombreSensor1);
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, 8);
-          cambioEncoder = 0;
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       }else if (valorDisplay == 4) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -2259,7 +2383,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 1, 8) != 4) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 110);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2267,8 +2391,13 @@ void display() {
           tft.print(perifericos[modificarPer].nombreSensor1);
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, 8);
-          cambioEncoder = 0;
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       }else if (valorDisplay == 5) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -2290,7 +2419,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 1, 8) != 5) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 135);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2298,8 +2427,13 @@ void display() {
           tft.print(perifericos[modificarPer].nombreSensor2);
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, 8);
-          cambioEncoder = 0;
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       }else if (valorDisplay == 6) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -2321,7 +2455,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 1, 8) != 6) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 160);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2329,8 +2463,13 @@ void display() {
           tft.print(perifericos[modificarPer].nombreSensor2);
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, 8);
-          cambioEncoder = 0;
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       }else if (valorDisplay == 7) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -2352,7 +2491,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 1, 8) != 7) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 185);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2360,8 +2499,13 @@ void display() {
           tft.print(perifericos[modificarPer].nombreSensor2);
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, 8);
-          cambioEncoder = 0;
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       }else if (valorDisplay == 8) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -2381,15 +2525,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 1, 8) != 8) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 210);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print("Volver");
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, 8);
-          cambioEncoder = 0;
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay = 1;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       }
       break;
@@ -2550,7 +2699,7 @@ void display() {
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(4);
           tft.print("PERIFERICOS");
-          valorDisplay = 0;
+          valorDisplay = 1;
           valorEncoder = 0;
           flagSWEncoder = 0;
           TFT_DISPLAY = INICIO;
@@ -2582,7 +2731,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indiceUsuario + 2)) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 10);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2591,10 +2740,18 @@ void display() {
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indiceUsuario + 2);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else if(valorDisplay == 1){
+            valorDisplay = indiceUsuario + 2;
+          }
+          else{
+            valorDisplay --;
+          }
           if (valorDisplay <= indiceUsuario && (valorDisplay == 5 || valorDisplay == 10 || valorDisplay == 15 || valorDisplay == 20)) {
             tft.fillScreen(ILI9341_BLACK);
             tft.setCursor(10, 10);
@@ -2673,7 +2830,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indiceUsuario + 2)) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 35);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2682,10 +2839,15 @@ void display() {
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indiceUsuario + 2);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       } else if (valorDisplay <= indiceUsuario && (valorDisplay == 3 || valorDisplay == 8 || valorDisplay == 13 || valorDisplay == 18)) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -2713,7 +2875,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indiceUsuario + 2)) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 60);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2722,10 +2884,15 @@ void display() {
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indiceUsuario + 2);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       } else if (valorDisplay <= indiceUsuario && (valorDisplay == 4 || valorDisplay == 9 || valorDisplay == 14 || valorDisplay == 19)) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -2753,7 +2920,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indiceUsuario + 2)) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 85);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2762,10 +2929,15 @@ void display() {
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indiceUsuario + 2);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
         }
       } else if (valorDisplay <= indiceUsuario && (valorDisplay == 5 || valorDisplay == 10 || valorDisplay == 15 || valorDisplay == 20)) {
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -2793,10 +2965,10 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indiceUsuario + 2)) {
-          cambioEncoder = 0;
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
+          valorEncoder = 0;
           tft.setCursor(10, 110);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2805,7 +2977,12 @@ void display() {
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
-          valorDisplay = map(valorEncoder, 0, 80, 1, indiceUsuario + 2);
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
           if (valorDisplay <= indiceUsuario && (valorDisplay == 1 || valorDisplay == 6 || valorDisplay == 11 || valorDisplay == 16)) {
             tft.fillScreen(ILI9341_BLACK);
             tft.setCursor(10, 10);
@@ -2884,15 +3061,20 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indiceUsuario + 2)) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 135);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print("Cancelar");
-          cambioEncoder = 0;
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indiceUsuario + 2);
+          valorEncoder = 0;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
           if (valorDisplay <= indiceUsuario && (valorDisplay == 5 || valorDisplay == 10 || valorDisplay == 15 || valorDisplay == 20)) {
             tft.fillScreen(ILI9341_BLACK);
             tft.setCursor(10, 10);
@@ -3083,11 +3265,19 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, indiceUsuario + 2)) {
-          cambioEncoder = 0;
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 1, indiceUsuario + 2);
+          valorEncoder = 0;
+          if(valorEncoder <= -1){
+            valorDisplay --;
+          }
+          else if(valorDisplay == indiceUsuario + 2){
+            valorDisplay = 1;
+          }
+          else{
+            valorDisplay ++;
+          }
           if (valorDisplay <= indiceUsuario) {
             tft.fillScreen(ILI9341_BLACK);
             tft.setCursor(10, 10);
@@ -3266,7 +3456,7 @@ void display() {
           TFT_DISPLAY = PERIFERICO;
         }
         flagSWEncoder = 0;
-      } else if (valorDisplay%2 == 0) {
+      } else if (valorDisplay == 2) {
         if (parpadeo >= TIEMPO_PARPADEO) {
           if (seleccionar) {
             tft.setCursor(10, 110);
@@ -3284,15 +3474,15 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 0, 20)%2 != 0) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(10, 110);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print("Si");
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 0, 20);
-          cambioEncoder = 0;
+          valorEncoder = 0;
+          valorDisplay = 1;
         }
       } else{
         if (parpadeo >= TIEMPO_PARPADEO) {
@@ -3312,15 +3502,15 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (cambioEncoder && map(valorEncoder, 0, 80, 0, 20)%2 != 1) {
+        if (valorEncoder >= 3 || valorEncoder <= -1) {
           tft.setCursor(60, 110);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print("No");
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          valorDisplay = map(valorEncoder, 0, 80, 0, 20);
-          cambioEncoder = 0;
+          valorEncoder = 0;
+          valorDisplay = 2;
         }
       }
       break;
@@ -3390,18 +3580,11 @@ void rotacionEncoder() {
   int valorDT = digitalRead(ENCODER_B_PIN);
 
   if (valorCLK != ultimoValorCLK) {
-    cambioEncoder = 1;
     if (valorDT != valorCLK) {
       valorEncoder--;
     } else {
       valorEncoder++;
     }
-  }
-
-  if (valorEncoder < 0) {
-    valorEncoder = 80;
-  } else if (valorEncoder > 80) {
-    valorEncoder = 0;
   }
 
   ultimoValorCLK = valorCLK;

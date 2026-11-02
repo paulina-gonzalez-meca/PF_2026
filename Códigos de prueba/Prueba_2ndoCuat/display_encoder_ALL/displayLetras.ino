@@ -45,15 +45,23 @@ int displayLetras(char nombre[], int &indiceNombre){
         parpadeo = 0;
       }
     }
-    if(cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, 29)){
+    if(valorEncoder >= 3 || valorEncoder <= -1){
       tft.setCursor( valorDisplay * ANCHO + 10, 35);
       tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
       tft.setTextSize(3);
       tft.print(letras[valorDisplay - 1]);
-      cambioEncoder = 0;
       parpadeo = TIEMPO_PARPADEO;
+      valorEncoder = 0;
       seleccionar = 0;
-      valorDisplay = map(valorEncoder, 0, 80, 1, 29);
+      if(valorEncoder >= 3){
+        valorDisplay ++;
+      }
+      else if (valorDisplay = 1){
+        valorDisplay = 29;
+      }
+      else{
+        valorDisplay --;
+      }
     }
   }
   else if(valorDisplay >= 10 && valorDisplay <= 18){
@@ -75,15 +83,20 @@ int displayLetras(char nombre[], int &indiceNombre){
         parpadeo = 0;
       }
     }
-    if(cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, 29)){
+    if(valorEncoder >= 3 || valorEncoder <= -1){
       tft.setCursor(valorDisplay * ANCHO - 152, 60);
       tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
       tft.setTextSize(3);
       tft.print(letras[valorDisplay - 1]);
-      cambioEncoder = 0;
       parpadeo = TIEMPO_PARPADEO;
+      valorEncoder = 0;
       seleccionar = 0;
-      valorDisplay = map(valorEncoder, 0, 80, 1, 29);
+      if(valorEncoder >= 3){
+        valorDisplay ++;
+      }
+      else{
+        valorDisplay --;
+      }
     }
   }
   else if(valorDisplay >= 19 && valorDisplay <= 26){
@@ -105,15 +118,20 @@ int displayLetras(char nombre[], int &indiceNombre){
         parpadeo = 0;
       }
     }
-    if(cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, 29)){
+    if(valorEncoder >= 3 || valorEncoder <= -1){
       tft.setCursor(valorDisplay * ANCHO  - 314, 85);
       tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
       tft.setTextSize(3);
       tft.print(letras[valorDisplay - 1]);
-      cambioEncoder = 0;
       parpadeo = TIEMPO_PARPADEO;
+      valorEncoder = 0;
       seleccionar = 0;
-      valorDisplay = map(valorEncoder, 0, 80, 1, 29);
+      if(valorEncoder >= 3){
+        valorDisplay ++;
+      }
+      else{
+        valorDisplay --;
+      }
     }
   }
   else if(valorDisplay == 27){
@@ -135,15 +153,20 @@ int displayLetras(char nombre[], int &indiceNombre){
         parpadeo = 0;
       }
     }
-    if(cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, 29)){
+    if(valorEncoder >= 3 || valorEncoder <= -1){
       tft.setCursor( 28, 120);
       tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
       tft.setTextSize(3);
       tft.print("Borrar");
-      cambioEncoder = 0;
       parpadeo = TIEMPO_PARPADEO;
+      valorEncoder = 0;
       seleccionar = 0;
-      valorDisplay = map(valorEncoder, 0, 80, 1, 29);
+      if(valorEncoder >= 3){
+        valorDisplay ++;
+      }
+      else{
+        valorDisplay --;
+      }
     }
   }
   else if(valorDisplay == 28){
@@ -165,15 +188,20 @@ int displayLetras(char nombre[], int &indiceNombre){
         parpadeo = 0;
       }
     }
-    if(cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, 29)){
+    if(valorEncoder >= 3 || valorEncoder <= -1){
       tft.setCursor( 28, 145);
       tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
       tft.setTextSize(3);
       tft.print("Confirmar");
-      cambioEncoder = 0;
       parpadeo = TIEMPO_PARPADEO;
+      valorEncoder = 0;
       seleccionar = 0;
-      valorDisplay = map(valorEncoder, 0, 80, 1, 29);
+      if(valorEncoder >= 3){
+        valorDisplay ++;
+      }
+      else{
+        valorDisplay --;
+      }
     }
   }
   else if(valorDisplay == 29){
@@ -195,15 +223,20 @@ int displayLetras(char nombre[], int &indiceNombre){
         parpadeo = 0;
       }
     }
-    if(cambioEncoder && valorDisplay != map(valorEncoder, 0, 80, 1, 29)){
+    if(valorEncoder >= 3 || valorEncoder <= -1){
       tft.setCursor( 28, 170);
       tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
       tft.setTextSize(3);
       tft.print("Cancelar");
-      cambioEncoder = 0;
       parpadeo = TIEMPO_PARPADEO;
+      valorEncoder = 0;
       seleccionar = 0;
-      valorDisplay = map(valorEncoder, 0, 80, 1, 29);
+      if(valorEncoder >= 3){
+        valorDisplay = 1;
+      }
+      else{
+        valorDisplay --;
+      }
     }
   }
   
