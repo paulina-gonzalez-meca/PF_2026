@@ -815,11 +815,8 @@ void display() {
           if(valorEncoder <= -1){
             valorDisplay --;
           }
-          else if(valorDisplay == indiceUsuario + 2){
-            valorDisplay  = 1;
-          }
           else{
-            valorDisplay ++;
+            valorDisplay  = 1;
           }
           if (valorDisplay <= indiceUsuario) {
             tft.fillScreen(ILI9341_BLACK);
@@ -1001,11 +998,11 @@ void display() {
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
           valorEncoder = 0;
-          if(valorEncoder >= 3){
+          if(valorEncoder <= -1){
             valorDisplay = 3;
           }
           else{
-            valorDisplay --;
+            valorDisplay ++;
           }
         }
       } else if (valorDisplay == 2) {
@@ -1776,11 +1773,8 @@ void display() {
           if(valorEncoder <= -1){
             valorDisplay --;
           }
-          else if(valorDisplay == indicePerifericos + 2){
-            valorDisplay  = 1;
-          }
           else{
-            valorDisplay ++;
+            valorDisplay  = 1;
           }
           if (valorDisplay <= indicePerifericos) {
             tft.fillScreen(ILI9341_BLACK);
@@ -3272,11 +3266,8 @@ void display() {
           if(valorEncoder <= -1){
             valorDisplay --;
           }
-          else if(valorDisplay == indiceUsuario + 2){
-            valorDisplay = 1;
-          }
           else{
-            valorDisplay ++;
+            valorDisplay = 1;
           }
           if (valorDisplay <= indiceUsuario) {
             tft.fillScreen(ILI9341_BLACK);
@@ -3405,8 +3396,8 @@ void display() {
       break;
     case ELIMINAR_PER:
       if (flagSWEncoder) {
-        if (valorDisplay%2 == 1 || valorDisplay%2 == 0) {
-          if(valorDisplay%2 == 0){
+        if (valorDisplay == 1 || valorDisplay == 2) {
+          if(valorDisplay == 2){
             if(!eliminarPer(perifericos, 20, eliminar)){
               break;
             }
