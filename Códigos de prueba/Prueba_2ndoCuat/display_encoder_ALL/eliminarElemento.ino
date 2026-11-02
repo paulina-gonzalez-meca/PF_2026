@@ -1,5 +1,6 @@
 bool eliminarPer(per miListaPer[], int tamLista, int &indiceEliminar){
   if(indiceEliminar < tamLista && miListaPer[indiceEliminar].nombreExterno != "\0" && miListaPer[indiceEliminar].nombreExterno != ""){
+    strcpy(miListaPer[indiceEliminar - 1].nombreInterno, miListaPer[indiceEliminar].nombreInterno);
     strcpy(miListaPer[indiceEliminar - 1].nombreExterno, miListaPer[indiceEliminar].nombreExterno);
     strcpy(miListaPer[indiceEliminar - 1].nombreSensor1, miListaPer[indiceEliminar].nombreSensor1);
     strcpy(miListaPer[indiceEliminar - 1].nombreSensor2, miListaPer[indiceEliminar].nombreSensor2);
