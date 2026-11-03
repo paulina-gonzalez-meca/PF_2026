@@ -48,8 +48,8 @@ typedef enum {  // state machine
 PASOS_CONECTAR_t CONECTAR_CEN;
 
 volatile unsigned int tiempoConectar = 0;
-int tipoSensor1;
-int tipoSensor2;
+int tipoSensor1 = 0;
+int tipoSensor2 = 0;
 int indicePeriferico = 0;
 uint64_t direccionConectar = 0xF0F0F0F0E0LL;
 
@@ -75,13 +75,13 @@ void setup() {
 }
 
 void loop() {
-  if(indicePeriferico < 19){
+  if(indicePeriferico < 20){
     if(tiempoConectar <= TIMEOUT_CONECTAR){
       if(conectar(indicePeriferico, direccionConectar, tiempoConectar)){
         Serial.println("conectado");
         Serial.println(String(tipoSensor1));
         Serial.println(String(tipoSensor2));
-        indicePeriferico ++;
+        indicePeriferico += 1;
         tiempoConectar = 0;
       }
     }
@@ -105,12 +105,11 @@ bool conectar(int nombreConectar, uint64_t direccion, volatile unsigned int &tie
 
         if(mensajeCentralConectar.startsWith("#C,") && mensajeCentralConectar.endsWith("*")){
           if(isDigit(mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf(',') + 1))){
-            tipoSensor1 = mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf(',') + 1);
+            tipoSensor1 = String(mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf(',') + 1)).toInt();
             if(isDigit(mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf(',') + 3))){
-              tipoSensor2 = mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf(',') + 3);
+              tipoSensor2 = String(mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf(',') + 3)).toInt();
               memset(mensajeConectar, 0, sizeof(mensajeConectar));
-              snprintf(mensajeConectar, sizeof(mensajeConectar), "#C,P%d*", nombreConectar + 1);
-              tiempoConectar = 0;
+              snprintf(mensajeConectar, sizeof(mensajeConectar), "#C,P%d*", (nombreConectar + 1));
               CONECTAR_CEN = ENVIO_CONECTAR;
             }
           }
@@ -123,6 +122,7 @@ bool conectar(int nombreConectar, uint64_t direccion, volatile unsigned int &tie
         radio.stopListening();
         radio.openWritingPipe(direccion);
         radio.write(mensajeConectar, strlen(mensajeConectar) + 1);
+        Serial.println(String(mensajeConectar));
         radio.startListening();
       }
       if(radio.available() > 0){
@@ -133,8 +133,8 @@ bool conectar(int nombreConectar, uint64_t direccion, volatile unsigned int &tie
         Serial.println(mensajeCentralConectar);
 
         if(mensajeCentralConectar == "OK"){
-          return true;
           CONECTAR_CEN = ESPERA;
+          return true;
         }
       }
       return false; 
