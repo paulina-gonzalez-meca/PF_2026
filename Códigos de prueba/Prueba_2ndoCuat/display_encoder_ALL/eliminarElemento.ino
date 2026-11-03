@@ -53,6 +53,7 @@ bool eliminarPer(per miListaPer[], int tamLista, int &indiceEliminar){
     return false;
   }
   else{
+    strcpy(miListaPer[indiceEliminar - 1].nombreInterno, nombreEliminar);
     strcpy(miListaPer[indiceEliminar - 1].nombreExterno, "   ");
     strcpy(miListaPer[indiceEliminar - 1].nombreSensor1, "   ");
     strcpy(miListaPer[indiceEliminar - 1].nombreSensor2, "   ");
