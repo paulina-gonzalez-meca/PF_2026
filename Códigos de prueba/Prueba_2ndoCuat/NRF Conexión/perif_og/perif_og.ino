@@ -27,17 +27,19 @@ RF24 radio(PIN_CE, PIN_CSN);
 void setup() {
   Serial.begin(9600);
   SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI);
+   Serial.println("SPI");
 
   radio.begin();
   radio.openReadingPipe(1, direccionConectar);
   radio.setPALevel(RF24_PA_MAX);
   radio.startListening();
+  Serial.println("inicializado");
 
   timer = timerBegin(1000000);  // 1 MHz = 1 µs
   timerAttachInterrupt(timer, &onTimer);
   timerAlarm(timer, 1000, true, 0);  // tick cada 1 ms
 
-  snprintf(mensaje, sizeof(mensaje), "C,%d,%d*", tipoSensor1, tipoSensor2);
+  snprintf(mensaje, sizeof(mensaje), "#C,%d,%d*", tipoSensor1, tipoSensor2);
 }
 
 void loop() {

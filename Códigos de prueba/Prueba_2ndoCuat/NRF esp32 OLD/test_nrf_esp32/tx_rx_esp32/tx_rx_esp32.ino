@@ -14,7 +14,7 @@ RF24 radio(PIN_CE, PIN_CSN, 1000000);
 // --------------------------------------
 // SHARED CONFIGURATION
 // --------------------------------------
-const uint64_t READING_ADDRESS = 0xF0F0F0F0E1LL;
+const uint64_t READING_ADDRESS = 0xF0F0F0F0E2LL;
 const uint64_t TRANSMISSION_ADDRESS = 0xF0F0F0F0E1LL;
 const uint8_t CANAL_RF = 76;
 String message = "000";

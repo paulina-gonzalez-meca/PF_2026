@@ -7,14 +7,10 @@
 #define TIEMPO_LED 1000
 #define PRESSED 0
 #define NOT_PRESSED 1
-#define PIN_SW 32
-#define PIN_CE 5
-#define PIN_CSN 15
-#define PIN_MISO 16z
-#define PIN_MOSI 2
-#define PIN_IRQ 4
-#define PIN_SCK 17
-#define PIN_LED 12
+#define PIN_SW PIN_PB0
+#define PIN_CE PIN_PA3
+#define PIN_CSN PIN_PA7
+#define PIN_LED PIN_PB1
 
 uint64_t direccionConectar = 0xF0F0F0F0E0LL;
 char mensajeRecibidoNRF[32];
@@ -25,15 +21,15 @@ int tiempo = 0;
 RF24 radio(PIN_CE, PIN_CSN);
 
 void setup() {
-  Serial.begin(9600);
-  SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI);
+  //Serial.begin(9600);
+  //SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI);
 
   radio.begin();
   radio.openWritingPipe(direccionConectar);
   radio.openReadingPipe(1, direccionConectar);
   radio.setPALevel(RF24_PA_MAX);
   radio.startListening();
-  
+
   pinMode(PIN_LED, OUTPUT);
   pinMode(PIN_SW, INPUT_PULLUP);
 
@@ -41,31 +37,30 @@ void setup() {
 }
 
 void loop() {
-  if(millis() - tiempo >= TIEMPO_LED){
+  if (millis() - tiempo >= TIEMPO_LED) {
     digitalWrite(PIN_LED, LOW);
   }
-  if(flagSW == 0){
-    if(digitalRead(PIN_SW) == PRESSED){
+  if (flagSW == 0) {
+    if (digitalRead(PIN_SW) == PRESSED) {
       flagSW = 1;
     }
-  }
-  else{
-    if(digitalRead(PIN_SW) == NOT_PRESSED){
+  } else {
+    if (digitalRead(PIN_SW) == NOT_PRESSED) {
       flagSW = 0;
       radio.stopListening();
       radio.write(mensaje, strlen(mensaje) + 1);
       radio.startListening();
     }
   }
-  if(radio.available() > 0){
+  if (radio.available() > 0) {
     memset(mensajeRecibidoNRF, 0, sizeof(mensajeRecibidoNRF));
     radio.read(&mensajeRecibidoNRF, sizeof(mensajeRecibidoNRF));
     String mensajeCentralConectar = String(mensajeRecibidoNRF);
     mensajeCentralConectar.trim();
-    if(mensajeCentralConectar == "hola"){
-    Serial.println(mensajeCentralConectar);
-    digitalWrite(PIN_LED, HIGH);
-    tiempo = millis();
+    if (mensajeCentralConectar == "hola") {
+      //Serial.println(mensajeCentralConectar);
+      digitalWrite(PIN_LED, HIGH);
+      tiempo = millis();
     }
   }
 }

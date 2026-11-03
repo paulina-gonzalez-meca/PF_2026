@@ -99,7 +99,7 @@ void loop() {
       radio.whatHappened(tx_ok, tx_fail, rx_ready);
 
       radio.startWrite(messageBuffer, PAYLOAD_SIZE, false);
-
+      
       state = TX;
     }
   }
