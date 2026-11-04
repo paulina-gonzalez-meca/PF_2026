@@ -31,6 +31,10 @@ public:
   int indiceNombrePer = 0;
   int indiceNombreS1 = 0;
   int indiceNombreS2 = 0;
+  int umbralMinS1 = 0;
+  int umbralMinS2 = 0;
+  int umbralMaxS1 = 0;
+  int umbralMaxS2 = 0;
   bool alertaS2[20] = { 0 };
   bool alertaS1[20] = { 0 };
   per() {
@@ -67,9 +71,9 @@ char nombreEliminar[4] = "";
 per perifericos[20];
 int indicePerifericos = 0;
 struct matriz {
-  char numeroUs[15];
-  char nombreUs[5] = "-";
-  int indiceNumeroUs = 0;
+  char numeroUs[15] = "+";
+  char nombreUs[5] = "";
+  int indiceNumeroUs = 1;
   int indiceNombreUs = 0;
 };
 matriz usuario[20] = {};
@@ -95,9 +99,13 @@ typedef enum {  // state machine
   EDITAR_NOMBRES1_PER,
   EDITAR_ALERTAS1_PER,
   EDITAR_UMBRALS1_PER,
+  EDITAR_UMBRALMAXS1_PER,
+  EDITAR_UMBRALMINS1_PER,
   EDITAR_NOMBRES2_PER,
   EDITAR_ALERTAS2_PER,
   EDITAR_UMBRALS2_PER,
+  EDITAR_UMBRALMINS2_PER,
+  EDITAR_UMBRALMAXS2_PER,
   ELIMINAR_PER,
   AGREGAR_PER
 } PASOS_DISPLAY_t;
@@ -288,7 +296,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 10);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(4);
@@ -316,7 +324,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 70);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(4);
@@ -427,7 +435,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 10);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -438,7 +446,7 @@ void display() {
             valorDisplay ++;
           }
           else if(valorDisplay == 1){
-            valorDisplay  == indiceUsuario + 2;
+            valorDisplay  = indiceUsuario + 2;
           }
           else{
             valorDisplay --;
@@ -494,7 +502,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 35);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -507,8 +515,8 @@ void display() {
           else{
             valorDisplay --;
           }
-        }
         valorEncoder = 0;
+        }
       } else if (valorDisplay <= indiceUsuario && (valorDisplay == 3 || valorDisplay == 8 || valorDisplay == 13 || valorDisplay == 18)) {
         if (parpadeo >= TIEMPO_PARPADEO) {
           if (seleccionar) {
@@ -527,7 +535,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 60);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -560,7 +568,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 85);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -593,7 +601,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
           tft.setCursor(10, 110);
@@ -665,7 +673,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 135);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -809,7 +817,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
           if(valorEncoder <= -1){
@@ -991,7 +999,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 35);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -1025,7 +1033,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 85);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -1058,7 +1066,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 110);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -1385,7 +1393,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 10);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -1452,7 +1460,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 35);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -1485,7 +1493,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 60);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -1518,7 +1526,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 85);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -1551,7 +1559,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
           tft.setCursor(10, 110);
@@ -1623,7 +1631,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 135);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -1767,7 +1775,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
           if(valorEncoder <= -1){
@@ -1957,7 +1965,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 110);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -1990,7 +1998,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 135);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2023,7 +2031,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 160);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2113,7 +2121,7 @@ void display() {
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
             tft.print(usuario[0].nombreUs);
-            tft.setCursor(100, 110);
+            tft.setCursor(100, 10);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
             tft.print(perifericos[modificarPer].alertaS1[0]);
@@ -2123,7 +2131,7 @@ void display() {
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
             tft.print(usuario[1].nombreUs);
-            tft.setCursor(100, 110);
+            tft.setCursor(100, 35);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
             tft.print(perifericos[modificarPer].alertaS1[1]);
@@ -2133,7 +2141,7 @@ void display() {
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
             tft.print(usuario[2].nombreUs);
-            tft.setCursor(100, 110);
+            tft.setCursor(100, 60);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
             tft.print(perifericos[modificarPer].alertaS1[2]);
@@ -2143,7 +2151,7 @@ void display() {
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
             tft.print(usuario[3].nombreUs);
-            tft.setCursor(100, 110);
+            tft.setCursor(100, 85);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
             tft.print(perifericos[modificarPer].alertaS1[3]);
@@ -2158,7 +2166,7 @@ void display() {
             tft.setTextSize(3);
             tft.print(perifericos[modificarPer].alertaS1[4]);
           }
-          tft.setCursor(10, 135);
+          tft.setCursor(140, 135);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
           tft.print("Volver");
@@ -2167,6 +2175,27 @@ void display() {
           TFT_DISPLAY = EDITAR_ALERTAS1_PER;
         }
         else if (valorDisplay == 4) {
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 35);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("umbral min: ");
+          tft.print(perifericos[modificarPer].umbralMinS1);
+          tft.setCursor(10, 60);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("umbral max: ");
+          tft.print(perifericos[modificarPer].umbralMaxS1);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+          valorEncoder = 0;
+          valorDisplay = 1;
           TFT_DISPLAY = EDITAR_UMBRALS1_PER;
         }
         else if (valorDisplay == 5) {
@@ -2202,9 +2231,87 @@ void display() {
           TFT_DISPLAY = EDITAR_NOMBRES2_PER;
         }
         else if(valorDisplay == 6){
+          tft.fillScreen(ILI9341_BLACK);
+          if (indiceUsuario >= 1) {
+            tft.setCursor(10, 10);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(usuario[0].nombreUs);
+            tft.setCursor(100, 10);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[0]);
+          }
+          if (indiceUsuario >= 2) {
+            tft.setCursor(10, 35);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(usuario[1].nombreUs);
+            tft.setCursor(100, 35);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[1]);
+          }
+          if (indiceUsuario >= 3) {
+            tft.setCursor(10, 60);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(usuario[2].nombreUs);
+            tft.setCursor(100, 60);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[2]);
+          }
+          if (indiceUsuario >= 4) {
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(usuario[3].nombreUs);
+            tft.setCursor(100, 85);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[3]);
+          }
+          if (indiceUsuario >= 5) {
+            tft.setCursor(10, 110);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(usuario[4].nombreUs);
+            tft.setCursor(100, 110);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[4]);
+          }
+          tft.setCursor(140, 135);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Volver");
+          valorEncoder = 0;
+          valorDisplay = 1;
           TFT_DISPLAY = EDITAR_ALERTAS2_PER;
         }
         else if (valorDisplay == 7) {
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 35);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("umbral min: ");
+          tft.print(perifericos[modificarPer].umbralMinS2);
+          tft.setCursor(10, 60);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("umbral max: ");
+          tft.print(perifericos[modificarPer].umbralMaxS2);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+          valorEncoder = 0;
+          valorDisplay = 1;
           TFT_DISPLAY = EDITAR_UMBRALS2_PER;
         }
         else if (valorDisplay == 8) {
@@ -2271,7 +2378,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 35);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2307,7 +2414,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 60);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2343,7 +2450,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 85);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2379,7 +2486,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 110);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2415,7 +2522,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 135);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2451,7 +2558,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 160);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2487,7 +2594,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 185);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2521,7 +2628,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 210);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2650,64 +2757,55 @@ void display() {
           }else{
             perifericos[modificarPer].alertaS1[valorDisplay - 1] = 1;
           }
-          TFT_DISPLAY = EDITAR_US;
         } else if (valorDisplay == indiceUsuario + 1) {
-          if (indiceUsuario < 20) {
-            tft.fillScreen(ILI9341_BLACK);
-            tft.setCursor(28, 35);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("ABCDEFGHI");
-            tft.setCursor(28, 60);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("JKLMNOPQR");
-            tft.setCursor(28, 85);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("STUVWXYZ");
-            tft.setCursor(28, 120);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Borrar");
-            tft.setCursor(28, 145);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Confirmar");
-            tft.setCursor(28, 170);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Cancelar");
-            strcpy(nombreUsBackup, "   ");
-            strcpy(numeroUsBackup, "             ");
-            valorDisplay = 1;
-            valorEncoder = 0;
-            flagSWEncoder = 0;
-            TFT_DISPLAY = AGREGAR_NOMBRE_US;
-          }
-        } else if (valorDisplay == indiceUsuario + 2) {
           tft.fillScreen(ILI9341_BLACK);
-          tft.setCursor(10, 10);
+          tft.setCursor(10, 35);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-          tft.setTextSize(4);
-          tft.print("USUARIOS");
-          tft.setCursor(10, 70);
+          tft.setTextSize(3);
+          tft.print("Nombre: ");
+          tft.print(perifericos[modificarPer].nombreExterno);
+          tft.setCursor(10, 60);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-          tft.setTextSize(4);
-          tft.print("PERIFERICOS");
-          valorDisplay = 1;
+          tft.setTextSize(3);
+          tft.print("Nombre S1: ");
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Alertas ");
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 110);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Umbral ");
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 135);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Nombre S2: ");
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 160);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Alertas ");
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 185);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Umbral ");
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 210);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Volver");
           valorEncoder = 0;
-          flagSWEncoder = 0;
-          TFT_DISPLAY = INICIO;
+          valorDisplay = 1;
+          TFT_DISPLAY = EDITAR_PER;
         }
         flagSWEncoder = 0;
       } else if (valorDisplay <= indiceUsuario && (valorDisplay == 1 || valorDisplay == 6 || valorDisplay == 11 || valorDisplay == 16)) {
         if (parpadeo >= TIEMPO_PARPADEO) {
           if (seleccionar) {
-            tft.setCursor(10, 10);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
             tft.setCursor(100, 10);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
@@ -2715,19 +2813,15 @@ void display() {
             seleccionar = 0;
             parpadeo = 0;
           } else {
-            tft.setCursor(10, 10);
-            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
             tft.setCursor(100, 10);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
             tft.setTextSize(3);
             tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
             seleccionar = 1;
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 10);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2742,7 +2836,7 @@ void display() {
             valorDisplay ++;
           }
           else if(valorDisplay == 1){
-            valorDisplay = indiceUsuario + 2;
+            valorDisplay = indiceUsuario + 1;
           }
           else{
             valorDisplay --;
@@ -2790,10 +2884,6 @@ void display() {
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
             tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
-            tft.setCursor(10, 135);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Cancelar");
             tft.setCursor(140, 135);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
@@ -2803,10 +2893,6 @@ void display() {
       } else if (valorDisplay <= indiceUsuario && (valorDisplay == 2 || valorDisplay == 7 || valorDisplay == 12 || valorDisplay == 17)) {
         if (parpadeo >= TIEMPO_PARPADEO) {
           if (seleccionar) {
-            tft.setCursor(10, 35);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
             tft.setCursor(100, 35);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
@@ -2814,19 +2900,15 @@ void display() {
             seleccionar = 0;
             parpadeo = 0;
           } else {
-            tft.setCursor(10, 35);
-            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
             tft.setCursor(100, 35);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
             tft.setTextSize(3);
             tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
             seleccionar = 1;
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 35);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2848,10 +2930,6 @@ void display() {
       } else if (valorDisplay <= indiceUsuario && (valorDisplay == 3 || valorDisplay == 8 || valorDisplay == 13 || valorDisplay == 18)) {
         if (parpadeo >= TIEMPO_PARPADEO) {
           if (seleccionar) {
-            tft.setCursor(10, 60);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
             tft.setCursor(100, 60);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
@@ -2859,19 +2937,15 @@ void display() {
             seleccionar = 0;
             parpadeo = 0;
           } else {
-            tft.setCursor(10, 60);
-            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
             tft.setCursor(100, 60);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
             tft.setTextSize(3);
             tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
             seleccionar = 1;
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 60);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2893,10 +2967,6 @@ void display() {
       } else if (valorDisplay <= indiceUsuario && (valorDisplay == 4 || valorDisplay == 9 || valorDisplay == 14 || valorDisplay == 19)) {
         if (parpadeo >= TIEMPO_PARPADEO) {
           if (seleccionar) {
-            tft.setCursor(10, 85);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
             tft.setCursor(100, 85);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
@@ -2904,19 +2974,15 @@ void display() {
             seleccionar = 0;
             parpadeo = 0;
           } else {
-            tft.setCursor(10, 85);
-            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
             tft.setCursor(100, 85);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
             tft.setTextSize(3);
             tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
             seleccionar = 1;
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 85);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -2938,10 +3004,6 @@ void display() {
       } else if (valorDisplay <= indiceUsuario && (valorDisplay == 5 || valorDisplay == 10 || valorDisplay == 15 || valorDisplay == 20)) {
         if (parpadeo >= TIEMPO_PARPADEO) {
           if (seleccionar) {
-            tft.setCursor(10, 110);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
             tft.setCursor(100, 110);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
@@ -2949,19 +3011,15 @@ void display() {
             seleccionar = 0;
             parpadeo = 0;
           } else {
-            tft.setCursor(10, 110);
-            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
             tft.setCursor(100, 110);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
             tft.setTextSize(3);
             tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
             seleccionar = 1;
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
           tft.setCursor(10, 110);
@@ -3007,7 +3065,7 @@ void display() {
               tft.setCursor(100, 60);
               tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
               tft.setTextSize(3);
-              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay + 1]);
             }
             if (indiceUsuario >= valorDisplay + 3) {
               tft.setCursor(10, 85);
@@ -3029,316 +3087,802 @@ void display() {
               tft.setTextSize(3);
               tft.print(perifericos[modificarPer].alertaS1[valorDisplay + 3]);
             }
-            tft.setCursor(10, 135);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Cancelar");
             tft.setCursor(140, 135);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
             tft.print("Volver");
           }
         }
-      } else if (valorDisplay == indiceUsuario + 1) {
+      }else if (valorDisplay == indiceUsuario + 1) {
         if (parpadeo >= TIEMPO_PARPADEO) {
           if (seleccionar) {
-            tft.setCursor(10, 135);
+            tft.setCursor(140, 135);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
-            tft.print("Cancelar");
+            tft.print("Volver");
             seleccionar = 0;
             parpadeo = 0;
           } else {
-            tft.setCursor(10, 135);
+            tft.setCursor(140, 135);
             tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
             tft.setTextSize(3);
-            tft.print("Cancelar");
+            tft.print("Volver");
             seleccionar = 1;
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder <= -1){
+            valorDisplay --;
+            if (valorDisplay <= indiceUsuario && (valorDisplay == 5 || valorDisplay == 10 || valorDisplay == 15 || valorDisplay == 20)) {
+              tft.fillScreen(ILI9341_BLACK);
+              tft.setCursor(10, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 5].nombreUs);
+              tft.setCursor(100, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 5]);
+              tft.setCursor(10, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 4].nombreUs);
+              tft.setCursor(100, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 4]);
+              tft.setCursor(10, 60);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 3].nombreUs);
+              tft.setCursor(100, 60);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 3]);
+              tft.setCursor(10, 85);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 2].nombreUs);
+              tft.setCursor(100, 85);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 2]);
+              tft.setCursor(10, 110);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 1].nombreUs);
+              tft.setCursor(100, 110);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
+              tft.setCursor(140, 135);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print("Volver");
+            } else if (valorDisplay <= indiceUsuario && (valorDisplay == 4 || valorDisplay == 9 || valorDisplay == 14 || valorDisplay == 19)) {
+              tft.fillScreen(ILI9341_BLACK);
+              tft.setCursor(10, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 4].nombreUs);
+              tft.setCursor(100, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 4]);
+              tft.setCursor(10, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 3].nombreUs);
+              tft.setCursor(100, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 3]);
+              tft.setCursor(10, 60);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 2].nombreUs);
+              tft.setCursor(100, 60);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 2]);
+              tft.setCursor(10, 85);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 1].nombreUs);
+              tft.setCursor(100, 85);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
+              tft.setCursor(140, 135);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print("Volver");
+            } else if (valorDisplay <= indiceUsuario && (valorDisplay == 3 || valorDisplay == 8 || valorDisplay == 13 || valorDisplay == 18)) {
+              tft.fillScreen(ILI9341_BLACK);
+              tft.setCursor(10, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 3].nombreUs);
+              tft.setCursor(100, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 3]);
+              tft.setCursor(10, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 2].nombreUs);
+              tft.setCursor(100, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 2]);
+              tft.setCursor(10, 60);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 1].nombreUs);
+              tft.setCursor(100, 60);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
+              tft.setCursor(140, 135);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print("Volver");
+            } else if (valorDisplay <= indiceUsuario && (valorDisplay == 2 || valorDisplay == 7 || valorDisplay == 12 || valorDisplay == 17)) {
+              tft.fillScreen(ILI9341_BLACK);
+              tft.setCursor(10, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 2].nombreUs);
+              tft.setCursor(100, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 2]);
+              tft.setCursor(10, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 1].nombreUs);
+              tft.setCursor(100, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
+              tft.setCursor(140, 135);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print("Volver");
+            } else if (valorDisplay <= indiceUsuario && (valorDisplay == 1 || valorDisplay == 6 || valorDisplay == 11 || valorDisplay == 16)) {
+              tft.fillScreen(ILI9341_BLACK);
+              tft.setCursor(10, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 1].nombreUs);
+              tft.setCursor(100, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
+              tft.setCursor(140, 135);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print("Volver");
+            }
+          }
+          else{
+            valorDisplay = 1;
+            if (valorDisplay <= indiceUsuario) {
+              tft.fillScreen(ILI9341_BLACK);
+              tft.setCursor(10, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 1].nombreUs);
+              tft.setCursor(100, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
+              if (indiceUsuario >= valorDisplay + 1) {
+                tft.setCursor(10, 35);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(usuario[valorDisplay].nombreUs);
+                tft.setCursor(100, 35);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(perifericos[modificarPer].alertaS1[valorDisplay]);
+              }
+              if (indiceUsuario >= valorDisplay + 2) {
+                tft.setCursor(10, 60);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(usuario[valorDisplay + 1].nombreUs);
+                tft.setCursor(100, 60);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(perifericos[modificarPer].alertaS1[valorDisplay + 1]);
+              }
+              if (indiceUsuario >= valorDisplay + 3) {
+                tft.setCursor(10, 85);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(usuario[valorDisplay + 2].nombreUs);
+                tft.setCursor(100, 85);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(perifericos[modificarPer].alertaS1[valorDisplay + 2]);
+              }
+              if (indiceUsuario >= valorDisplay + 4) {
+                tft.setCursor(10, 110);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(usuario[valorDisplay + 3].nombreUs);
+                tft.setCursor(100, 110);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(perifericos[modificarPer].alertaS1[valorDisplay + 3]);
+              }
+              tft.setCursor(140, 135);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print("Volver");
+            }
+          }
+          valorEncoder = 0;
+        }
+      }
+      break;
+    case EDITAR_UMBRALS1_PER:
+      if (flagSWEncoder) {
+        if (valorDisplay == 1) {
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("+");
+          tft.setCursor(10, 61);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("-");
+          tft.setCursor(28, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].umbralMinS1);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+          valorEncoder = 0;
+          valorDisplay = 1;
+          TFT_DISPLAY = EDITAR_UMBRALMINS1_PER;
+        } else if(valorDisplay == 2){
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("+");
+          tft.setCursor(10, 61);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("-");
+          tft.setCursor(28, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].umbralMaxS1);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(4);
+          tft.print("volver");
+          valorEncoder = 0;
+          valorDisplay = 1;
+          TFT_DISPLAY = EDITAR_UMBRALMAXS1_PER;
+        }
+        else{
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 35);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Nombre: ");
+          tft.print(perifericos[modificarPer].nombreExterno);
+          tft.setCursor(10, 60);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Nombre S1: ");
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Alertas ");
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 110);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Umbral ");
+          tft.print(perifericos[modificarPer].nombreSensor1);
           tft.setCursor(10, 135);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
-          tft.print("Cancelar");
+          tft.print("Nombre S2: ");
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 160);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Alertas ");
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 185);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Umbral ");
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 210);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Volver");
+          valorEncoder = 0;
+          valorDisplay = 1;
+          TFT_DISPLAY = EDITAR_PER;
+        }
+        flagSWEncoder = 0;
+      } else if (valorDisplay == 1) {
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 35);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print("Umbral min: ");
+            tft.print(perifericos[modificarPer].umbralMinS1);
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 35);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(3);
+            tft.print("Umbral min: ");
+            tft.print(perifericos[modificarPer].umbralMinS1);
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 35);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Umbral min: ");
+          tft.print(perifericos[modificarPer].umbralMinS1);
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
           if(valorEncoder >= 3){
             valorDisplay ++;
           }
           else{
-            valorDisplay --;
+            valorDisplay = 3;
           }
           valorEncoder = 0;
-          if (valorDisplay <= indiceUsuario && (valorDisplay == 5 || valorDisplay == 10 || valorDisplay == 15 || valorDisplay == 20)) {
-            tft.fillScreen(ILI9341_BLACK);
-            tft.setCursor(10, 10);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 5].nombreUs);
-            tft.setCursor(100, 10);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 5]);
-            tft.setCursor(10, 35);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 4].nombreUs);
-            tft.setCursor(100, 35);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 4]);
-            tft.setCursor(10, 60);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 3].nombreUs);
-            tft.setCursor(100, 60);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 3]);
-            tft.setCursor(10, 85);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 2].nombreUs);
-            tft.setCursor(100, 85);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 2]);
-            tft.setCursor(10, 110);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
-            tft.setCursor(100, 110);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
-            tft.setCursor(10, 135);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Cancelar");
-            tft.setCursor(140, 135);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Volver");
-          } else if (valorDisplay <= indiceUsuario && (valorDisplay == 4 || valorDisplay == 9 || valorDisplay == 14 || valorDisplay == 19)) {
-            tft.fillScreen(ILI9341_BLACK);
-            tft.setCursor(10, 10);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 4].nombreUs);
-            tft.setCursor(100, 10);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 4]);
-            tft.setCursor(10, 35);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 3].nombreUs);
-            tft.setCursor(100, 35);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 3]);
-            tft.setCursor(10, 60);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 2].nombreUs);
-            tft.setCursor(100, 60);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 2]);
-            tft.setCursor(10, 85);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
-            tft.setCursor(100, 85);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
-            tft.setCursor(10, 135);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Cancelar");
-            tft.setCursor(140, 135);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Volver");
-          } else if (valorDisplay <= indiceUsuario && (valorDisplay == 3 || valorDisplay == 8 || valorDisplay == 13 || valorDisplay == 18)) {
-            tft.fillScreen(ILI9341_BLACK);
-            tft.setCursor(10, 10);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 3].nombreUs);
-            tft.setCursor(100, 10);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 3]);
-            tft.setCursor(10, 35);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 2].nombreUs);
-            tft.setCursor(100, 35);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 2]);
-            tft.setCursor(10, 60);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
-            tft.setCursor(100, 60);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
-            tft.setCursor(10, 135);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Cancelar");
-            tft.setCursor(140, 135);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Volver");
-          } else if (valorDisplay <= indiceUsuario && (valorDisplay == 2 || valorDisplay == 7 || valorDisplay == 12 || valorDisplay == 17)) {
-            tft.fillScreen(ILI9341_BLACK);
-            tft.setCursor(10, 10);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 2].nombreUs);
-            tft.setCursor(100, 10);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 2]);
-            tft.setCursor(10, 35);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
-            tft.setCursor(100, 35);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
-            tft.setCursor(10, 135);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Cancelar");
-            tft.setCursor(140, 135);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Volver");
-          } else if (valorDisplay <= indiceUsuario && (valorDisplay == 1 || valorDisplay == 6 || valorDisplay == 11 || valorDisplay == 16)) {
-            tft.fillScreen(ILI9341_BLACK);
-            tft.setCursor(10, 10);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
-            tft.setCursor(100, 10);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
-            tft.setCursor(10, 135);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Cancelar");
-            tft.setCursor(140, 135);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Volver");
-          }
         }
-      } else if (valorDisplay == indiceUsuario + 2) {
+      } else if(valorDisplay == 2){
         if (parpadeo >= TIEMPO_PARPADEO) {
           if (seleccionar) {
-            tft.setCursor(140, 135);
+            tft.setCursor(10, 60);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
-            tft.print("Volver");
+            tft.print("Umbral max: ");
+            tft.print(perifericos[modificarPer].umbralMaxS1);
             seleccionar = 0;
             parpadeo = 0;
           } else {
-            tft.setCursor(140, 135);
+            tft.setCursor(10, 60);
             tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
             tft.setTextSize(3);
-            tft.print("Volver");
+            tft.print("Umbral max: ");
+            tft.print(perifericos[modificarPer].umbralMaxS1);
             seleccionar = 1;
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 60);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Umbral max: ");
+          tft.print(perifericos[modificarPer].umbralMaxS1);
           seleccionar = 0;
           parpadeo = TIEMPO_PARPADEO;
-          if(valorEncoder <= -1){
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }else {
             valorDisplay --;
           }
-          else{
+          valorEncoder = 0;
+        }
+      }else if(valorDisplay == 3){
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print("volver");
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(3);
+            tft.print("volver");
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
             valorDisplay = 1;
+          }else {
+            valorDisplay --;
           }
           valorEncoder = 0;
-          if (valorDisplay <= indiceUsuario) {
+        }
+      }
+      break;
+    case EDITAR_UMBRALMINS1_PER:
+      if (flagSWEncoder) {
+        if (valorDisplay == 1) {
+          if(perifericos[modificarPer].umbralMinS1 < perifericos[modificarPer].umbralMaxS1 - 1){
+            perifericos[modificarPer].umbralMinS1 ++;
             tft.fillScreen(ILI9341_BLACK);
             tft.setCursor(10, 10);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
-            tft.print(usuario[valorDisplay - 1].nombreUs);
-            tft.setCursor(100, 10);
+            tft.print(perifericos[modificarPer].nombreSensor1);
+            tft.setCursor(10, 45);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("+");
+            tft.setCursor(10, 61);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("-");
+            tft.setCursor(28, 45);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
-            tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
-            if (indiceUsuario >= valorDisplay + 1) {
-              tft.setCursor(10, 35);
-              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-              tft.setTextSize(3);
-              tft.print(usuario[valorDisplay].nombreUs);
-              tft.setCursor(100, 35);
-              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-              tft.setTextSize(3);
-              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
-            }
-            if (indiceUsuario >= valorDisplay + 2) {
-              tft.setCursor(10, 60);
-              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-              tft.setTextSize(3);
-              tft.print(usuario[valorDisplay + 1].nombreUs);
-              tft.setCursor(100, 60);
-              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-              tft.setTextSize(3);
-              tft.print(perifericos[modificarPer].alertaS1[valorDisplay + 1]);
-            }
-            if (indiceUsuario >= valorDisplay + 3) {
-              tft.setCursor(10, 85);
-              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-              tft.setTextSize(3);
-              tft.print(usuario[valorDisplay + 2].nombreUs);
-              tft.setCursor(100, 85);
-              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-              tft.setTextSize(3);
-              tft.print(perifericos[modificarPer].alertaS1[valorDisplay - 1]);
-            }
-            if (indiceUsuario >= valorDisplay + 4) {
-              tft.setCursor(10, 110);
-              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-              tft.setTextSize(3);
-              tft.print(usuario[valorDisplay + 3].nombreUs);
-              tft.setCursor(100, 110);
-              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-              tft.setTextSize(3);
-              tft.print(perifericos[modificarPer].alertaS1[valorDisplay + 3]);
-            }
-            tft.setCursor(10, 135);
+            tft.print(perifericos[modificarPer].umbralMinS1);
+            tft.setCursor(10, 85);
             tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
             tft.setTextSize(3);
-            tft.print("Volver");
-            tft.setCursor(140, 135);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Volver");
-          } else {
-            tft.setCursor(140, 135);
-            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-            tft.setTextSize(3);
-            tft.print("Volver");
+            tft.print("volver");
           }
+        } else if(valorDisplay == 2){
+          perifericos[modificarPer].umbralMinS1 --;
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("+");
+          tft.setCursor(10, 61);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("-");
+          tft.setCursor(28, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].umbralMinS1);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+        }
+        else{
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 35);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("umbral min: ");
+          tft.print(perifericos[modificarPer].umbralMinS1);
+          tft.setCursor(10, 60);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("umbral max: ");
+          tft.print(perifericos[modificarPer].umbralMaxS1);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+          valorEncoder = 0;
+          valorDisplay = 1;
+          TFT_DISPLAY = EDITAR_UMBRALS1_PER;
+        }
+        flagSWEncoder = 0;
+      } else if (valorDisplay == 1) {
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 45);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("+");
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 45);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(2);
+            tft.print("+");
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("+");
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay = 3;
+          }
+          valorEncoder = 0;
+        }
+      } else if(valorDisplay == 2){
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 61);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("-");
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 61);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(2);
+            tft.print("-");
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 61);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("-");
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }else {
+            valorDisplay --;
+          }
+          valorEncoder = 0;
+        }
+      }else if(valorDisplay == 3){
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print("volver");
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(3);
+            tft.print("volver");
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay = 1;
+          }else {
+            valorDisplay --;
+          }
+          valorEncoder = 0;
         }
       }
       break;
-    case EDITAR_UMBRALS1_PER:
+    case EDITAR_UMBRALMAXS1_PER:
+      if (flagSWEncoder) {
+        if (valorDisplay == 1) {
+          perifericos[modificarPer].umbralMaxS1 ++;
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("+");
+          tft.setCursor(10, 61);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("-");
+          tft.setCursor(28, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].umbralMaxS1);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+        } else if(valorDisplay == 2){
+          if(perifericos[modificarPer].umbralMinS1 + 1 < perifericos[modificarPer].umbralMaxS1){
+            perifericos[modificarPer].umbralMaxS1 --;
+            tft.fillScreen(ILI9341_BLACK);
+            tft.setCursor(10, 10);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].nombreSensor1);
+            tft.setCursor(10, 45);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("+");
+            tft.setCursor(10, 61);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("-");
+            tft.setCursor(28, 45);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].umbralMaxS1);
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print("volver");
+          }
+        }
+        else{
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 35);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("umbral min: ");
+          tft.print(perifericos[modificarPer].umbralMinS1);
+          tft.setCursor(10, 60);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("umbral max: ");
+          tft.print(perifericos[modificarPer].umbralMaxS1);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+          valorEncoder = 0;
+          valorDisplay = 1;
+          TFT_DISPLAY = EDITAR_UMBRALS1_PER;
+        }
+        flagSWEncoder = 0;
+      } else if (valorDisplay == 1) {
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 45);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("+");
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 45);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(2);
+            tft.print("+");
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("+");
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay = 3;
+          }
+          valorEncoder = 0;
+        }
+      } else if(valorDisplay == 2){
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 61);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("-");
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 61);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(2);
+            tft.print("-");
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 61);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("-");
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }else {
+            valorDisplay --;
+          }
+          valorEncoder = 0;
+        }
+      }else if(valorDisplay == 3){
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print("volver");
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(3);
+            tft.print("volver");
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay = 1;
+          }else {
+            valorDisplay --;
+          }
+          valorEncoder = 0;
+        }
+      }
       break;
     case EDITAR_NOMBRES2_PER: {
       short int returnDisplayLetras = displayLetras(perifericos[modificarPer].nombreSensor2, perifericos[modificarPer].indiceNombreS2);
@@ -3393,8 +3937,1139 @@ void display() {
       break;
     }
     case EDITAR_ALERTAS2_PER:
+      if (flagSWEncoder) {
+        if (valorDisplay <= indiceUsuario) {
+          if(perifericos[modificarPer].alertaS2[valorDisplay - 1] == 1){
+            perifericos[modificarPer].alertaS2[valorDisplay - 1] = 0;
+          }else{
+            perifericos[modificarPer].alertaS2[valorDisplay - 1] = 1;
+          }
+        } else if (valorDisplay == indiceUsuario + 1) {
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 35);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Nombre: ");
+          tft.print(perifericos[modificarPer].nombreExterno);
+          tft.setCursor(10, 60);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Nombre S1: ");
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Alertas ");
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 110);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Umbral ");
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 135);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Nombre S2: ");
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 160);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Alertas ");
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 185);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Umbral ");
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 210);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Volver");
+          valorEncoder = 0;
+          valorDisplay = 1;
+          TFT_DISPLAY = EDITAR_PER;
+        }
+        flagSWEncoder = 0;
+      } else if (valorDisplay <= indiceUsuario && (valorDisplay == 1 || valorDisplay == 6 || valorDisplay == 11 || valorDisplay == 16)) {
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(100, 10);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(100, 10);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(usuario[valorDisplay - 1].nombreUs);
+          tft.setCursor(100, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else if(valorDisplay == 1){
+            valorDisplay = indiceUsuario + 1;
+          }
+          else{
+            valorDisplay --;
+          }
+          valorEncoder = 0;
+          if (valorDisplay <= indiceUsuario && (valorDisplay == 5 || valorDisplay == 10 || valorDisplay == 15 || valorDisplay == 20)) {
+            tft.fillScreen(ILI9341_BLACK);
+            tft.setCursor(10, 10);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(usuario[valorDisplay - 5].nombreUs);
+            tft.setCursor(100, 10);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 5]);
+            tft.setCursor(10, 35);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(usuario[valorDisplay - 4].nombreUs);
+            tft.setCursor(100, 35);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 4]);
+            tft.setCursor(10, 60);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(usuario[valorDisplay - 3].nombreUs);
+            tft.setCursor(100, 60);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 3]);
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(usuario[valorDisplay - 2].nombreUs);
+            tft.setCursor(100, 85);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 2]);
+            tft.setCursor(10, 110);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(usuario[valorDisplay - 1].nombreUs);
+            tft.setCursor(100, 110);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+            tft.setCursor(140, 135);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print("Volver");
+          }
+        }
+      } else if (valorDisplay <= indiceUsuario && (valorDisplay == 2 || valorDisplay == 7 || valorDisplay == 12 || valorDisplay == 17)) {
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(100, 35);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(100, 35);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 35);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(usuario[valorDisplay - 1].nombreUs);
+          tft.setCursor(100, 35);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
+          valorEncoder = 0;
+        }
+      } else if (valorDisplay <= indiceUsuario && (valorDisplay == 3 || valorDisplay == 8 || valorDisplay == 13 || valorDisplay == 18)) {
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(100, 60);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(100, 60);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 60);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(usuario[valorDisplay - 1].nombreUs);
+          tft.setCursor(100, 60);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
+          valorEncoder = 0;
+        }
+      } else if (valorDisplay <= indiceUsuario && (valorDisplay == 4 || valorDisplay == 9 || valorDisplay == 14 || valorDisplay == 19)) {
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(100, 85);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(100, 85);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(usuario[valorDisplay - 1].nombreUs);
+          tft.setCursor(100, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
+          valorEncoder = 0;
+        }
+      } else if (valorDisplay <= indiceUsuario && (valorDisplay == 5 || valorDisplay == 10 || valorDisplay == 15 || valorDisplay == 20)) {
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(100, 110);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(100, 110);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          tft.setCursor(10, 110);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(usuario[valorDisplay - 1].nombreUs);
+          tft.setCursor(100, 110);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay --;
+          }
+          valorEncoder = 0;
+          if (valorDisplay <= indiceUsuario && (valorDisplay == 1 || valorDisplay == 6 || valorDisplay == 11 || valorDisplay == 16)) {
+            tft.fillScreen(ILI9341_BLACK);
+            tft.setCursor(10, 10);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(usuario[valorDisplay - 1].nombreUs);
+            tft.setCursor(100, 10);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+            if (indiceUsuario >= valorDisplay + 1) {
+              tft.setCursor(10, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay].nombreUs);
+              tft.setCursor(100, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay]);
+            }
+            if (indiceUsuario >= valorDisplay + 2) {
+              tft.setCursor(10, 60);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay + 1].nombreUs);
+              tft.setCursor(100, 60);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay + 1]);
+            }
+            if (indiceUsuario >= valorDisplay + 3) {
+              tft.setCursor(10, 85);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay + 2].nombreUs);
+              tft.setCursor(100, 85);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay + 2]);
+            }
+            if (indiceUsuario >= valorDisplay + 4) {
+              tft.setCursor(10, 110);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay + 3].nombreUs);
+              tft.setCursor(100, 110);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay + 3]);
+            }
+            tft.setCursor(140, 135);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print("Volver");
+          }
+        }
+      }else if (valorDisplay == indiceUsuario + 1) {
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(140, 135);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print("Volver");
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(140, 135);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(3);
+            tft.print("Volver");
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder <= -1){
+            valorDisplay --;
+            if (valorDisplay <= indiceUsuario && (valorDisplay == 5 || valorDisplay == 10 || valorDisplay == 15 || valorDisplay == 20)) {
+              tft.fillScreen(ILI9341_BLACK);
+              tft.setCursor(10, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 5].nombreUs);
+              tft.setCursor(100, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 5]);
+              tft.setCursor(10, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 4].nombreUs);
+              tft.setCursor(100, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 4]);
+              tft.setCursor(10, 60);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 3].nombreUs);
+              tft.setCursor(100, 60);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 3]);
+              tft.setCursor(10, 85);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 2].nombreUs);
+              tft.setCursor(100, 85);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 2]);
+              tft.setCursor(10, 110);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 1].nombreUs);
+              tft.setCursor(100, 110);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+              tft.setCursor(140, 135);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print("Volver");
+            } else if (valorDisplay <= indiceUsuario && (valorDisplay == 4 || valorDisplay == 9 || valorDisplay == 14 || valorDisplay == 19)) {
+              tft.fillScreen(ILI9341_BLACK);
+              tft.setCursor(10, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 4].nombreUs);
+              tft.setCursor(100, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 4]);
+              tft.setCursor(10, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 3].nombreUs);
+              tft.setCursor(100, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 3]);
+              tft.setCursor(10, 60);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 2].nombreUs);
+              tft.setCursor(100, 60);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 2]);
+              tft.setCursor(10, 85);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 1].nombreUs);
+              tft.setCursor(100, 85);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+              tft.setCursor(140, 135);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print("Volver");
+            } else if (valorDisplay <= indiceUsuario && (valorDisplay == 3 || valorDisplay == 8 || valorDisplay == 13 || valorDisplay == 18)) {
+              tft.fillScreen(ILI9341_BLACK);
+              tft.setCursor(10, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 3].nombreUs);
+              tft.setCursor(100, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 3]);
+              tft.setCursor(10, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 2].nombreUs);
+              tft.setCursor(100, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 2]);
+              tft.setCursor(10, 60);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 1].nombreUs);
+              tft.setCursor(100, 60);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+              tft.setCursor(140, 135);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print("Volver");
+            } else if (valorDisplay <= indiceUsuario && (valorDisplay == 2 || valorDisplay == 7 || valorDisplay == 12 || valorDisplay == 17)) {
+              tft.fillScreen(ILI9341_BLACK);
+              tft.setCursor(10, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 2].nombreUs);
+              tft.setCursor(100, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 2]);
+              tft.setCursor(10, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 1].nombreUs);
+              tft.setCursor(100, 35);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+              tft.setCursor(140, 135);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print("Volver");
+            } else if (valorDisplay <= indiceUsuario && (valorDisplay == 1 || valorDisplay == 6 || valorDisplay == 11 || valorDisplay == 16)) {
+              tft.fillScreen(ILI9341_BLACK);
+              tft.setCursor(10, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 1].nombreUs);
+              tft.setCursor(100, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+              tft.setCursor(140, 135);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print("Volver");
+            }
+          }
+          else{
+            valorDisplay = 1;
+            if (valorDisplay <= indiceUsuario) {
+              tft.fillScreen(ILI9341_BLACK);
+              tft.setCursor(10, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(usuario[valorDisplay - 1].nombreUs);
+              tft.setCursor(100, 10);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print(perifericos[modificarPer].alertaS2[valorDisplay - 1]);
+              if (indiceUsuario >= valorDisplay + 1) {
+                tft.setCursor(10, 35);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(usuario[valorDisplay].nombreUs);
+                tft.setCursor(100, 35);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(perifericos[modificarPer].alertaS2[valorDisplay]);
+              }
+              if (indiceUsuario >= valorDisplay + 2) {
+                tft.setCursor(10, 60);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(usuario[valorDisplay + 1].nombreUs);
+                tft.setCursor(100, 60);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(perifericos[modificarPer].alertaS2[valorDisplay + 1]);
+              }
+              if (indiceUsuario >= valorDisplay + 3) {
+                tft.setCursor(10, 85);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(usuario[valorDisplay + 2].nombreUs);
+                tft.setCursor(100, 85);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(perifericos[modificarPer].alertaS2[valorDisplay + 2]);
+              }
+              if (indiceUsuario >= valorDisplay + 4) {
+                tft.setCursor(10, 110);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(usuario[valorDisplay + 3].nombreUs);
+                tft.setCursor(100, 110);
+                tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+                tft.setTextSize(3);
+                tft.print(perifericos[modificarPer].alertaS2[valorDisplay + 3]);
+              }
+              tft.setCursor(140, 135);
+              tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+              tft.setTextSize(3);
+              tft.print("Volver");
+            }
+          }
+          valorEncoder = 0;
+        }
+      }
       break;
     case EDITAR_UMBRALS2_PER:
+      if (flagSWEncoder) {
+        if (valorDisplay == 1) {
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("+");
+          tft.setCursor(10, 61);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("-");
+          tft.setCursor(28, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].umbralMinS2);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+          valorEncoder = 0;
+          valorDisplay = 1;
+          TFT_DISPLAY = EDITAR_UMBRALMINS2_PER;
+        } else if(valorDisplay == 2){
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("+");
+          tft.setCursor(10, 61);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("-");
+          tft.setCursor(28, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print(perifericos[modificarPer].umbralMaxS2);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(4);
+          tft.print("volver");
+          valorEncoder = 0;
+          valorDisplay = 1;
+          TFT_DISPLAY = EDITAR_UMBRALMAXS2_PER;
+        }
+        else{
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 35);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Nombre: ");
+          tft.print(perifericos[modificarPer].nombreExterno);
+          tft.setCursor(10, 60);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Nombre S1: ");
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Alertas ");
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 110);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Umbral ");
+          tft.print(perifericos[modificarPer].nombreSensor1);
+          tft.setCursor(10, 135);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Nombre S2: ");
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 160);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Alertas ");
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 185);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Umbral ");
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 210);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Volver");
+          valorEncoder = 0;
+          valorDisplay = 1;
+          TFT_DISPLAY = EDITAR_PER;
+        }
+        flagSWEncoder = 0;
+      } else if (valorDisplay == 1) {
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 35);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print("Umbral min: ");
+            tft.print(perifericos[modificarPer].umbralMinS2);
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 35);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(3);
+            tft.print("Umbral min: ");
+            tft.print(perifericos[modificarPer].umbralMinS2);
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 35);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("Umbral min: ");
+          tft.print(perifericos[modificarPer].umbralMinS2);
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay = 3;
+          }
+          valorEncoder = 0;
+        }
+      } else if(valorDisplay == 2){
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 60);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print("Umbral max: ");
+            tft.print(perifericos[modificarPer].umbralMaxS2);
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 60);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(3);
+            tft.print("Umbral max: ");
+            tft.print(perifericos[modificarPer].umbralMaxS2);
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 60);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+            tft.print("Umbral max: ");
+            tft.print(perifericos[modificarPer].umbralMaxS2);
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }else {
+            valorDisplay --;
+          }
+          valorEncoder = 0;
+        }
+      }else if(valorDisplay == 3){
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print("volver");
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(3);
+            tft.print("volver");
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay = 1;
+          }else {
+            valorDisplay --;
+          }
+          valorEncoder = 0;
+        }
+      }
+      break;
+    case EDITAR_UMBRALMINS2_PER:
+      if (flagSWEncoder) {
+        if (valorDisplay == 1) {
+          if(perifericos[modificarPer].umbralMinS2 < perifericos[modificarPer].umbralMaxS2 - 1){
+            perifericos[modificarPer].umbralMinS2 ++;
+            tft.fillScreen(ILI9341_BLACK);
+            tft.setCursor(10, 10);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].nombreSensor2);
+            tft.setCursor(10, 45);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("+");
+            tft.setCursor(10, 61);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("-");
+            tft.setCursor(28, 45);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].umbralMinS2);
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print("volver");
+          }
+        } else if(valorDisplay == 2){
+          perifericos[modificarPer].umbralMinS2 --;
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("+");
+          tft.setCursor(10, 61);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("-");
+          tft.setCursor(28, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].umbralMinS2);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+        }
+        else{
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 35);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("umbral min: ");
+          tft.print(perifericos[modificarPer].umbralMinS2);
+          tft.setCursor(10, 60);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("umbral max: ");
+          tft.print(perifericos[modificarPer].umbralMaxS2);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+          valorEncoder = 0;
+          valorDisplay = 1;
+          TFT_DISPLAY = EDITAR_UMBRALS2_PER;
+        }
+        flagSWEncoder = 0;
+      } else if (valorDisplay == 1) {
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 45);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("+");
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 45);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(2);
+            tft.print("+");
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("+");
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay = 3;
+          }
+          valorEncoder = 0;
+        }
+      } else if(valorDisplay == 2){
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 61);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("-");
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 61);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(2);
+            tft.print("-");
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 61);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("-");
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }else {
+            valorDisplay --;
+          }
+          valorEncoder = 0;
+        }
+      }else if(valorDisplay == 3){
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print("volver");
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(3);
+            tft.print("volver");
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay = 1;
+          }else {
+            valorDisplay --;
+          }
+          valorEncoder = 0;
+        }
+      }
+      break;
+    case EDITAR_UMBRALMAXS2_PER:
+      if (flagSWEncoder) {
+        if (valorDisplay == 1) {
+          perifericos[modificarPer].umbralMaxS2 ++;
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].nombreSensor2);
+            tft.setCursor(10, 45);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("+");
+            tft.setCursor(10, 61);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("-");
+          tft.setCursor(28, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].umbralMaxS2);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+        } else if(valorDisplay == 2){
+          if(perifericos[modificarPer].umbralMinS2 + 1 < perifericos[modificarPer].umbralMaxS2){
+            perifericos[modificarPer].umbralMaxS2 --;
+            tft.fillScreen(ILI9341_BLACK);
+            tft.setCursor(10, 10);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].nombreSensor2);
+            tft.setCursor(10, 45);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("+");
+            tft.setCursor(10, 61);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("-");
+            tft.setCursor(28, 45);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print(perifericos[modificarPer].umbralMaxS2);
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print("volver");
+          }
+        }
+        else{
+          tft.fillScreen(ILI9341_BLACK);
+          tft.setCursor(10, 10);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print(perifericos[modificarPer].nombreSensor2);
+          tft.setCursor(10, 35);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("umbral min: ");
+          tft.print(perifericos[modificarPer].umbralMinS2);
+          tft.setCursor(10, 60);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("umbral max: ");
+          tft.print(perifericos[modificarPer].umbralMaxS2);
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+          valorEncoder = 0;
+          valorDisplay = 1;
+          TFT_DISPLAY = EDITAR_UMBRALS2_PER;
+        }
+        flagSWEncoder = 0;
+      } else if (valorDisplay == 1) {
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 45);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("+");
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 45);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(2);
+            tft.print("+");
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 45);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("+");
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }
+          else{
+            valorDisplay = 3;
+          }
+          valorEncoder = 0;
+        }
+      } else if(valorDisplay == 2){
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 61);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(2);
+            tft.print("-");
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 61);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(2);
+            tft.print("-");
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 61);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(2);
+          tft.print("-");
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay ++;
+          }else {
+            valorDisplay --;
+          }
+          valorEncoder = 0;
+        }
+      }else if(valorDisplay == 3){
+        if (parpadeo >= TIEMPO_PARPADEO) {
+          if (seleccionar) {
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+            tft.setTextSize(3);
+            tft.print("volver");
+            seleccionar = 0;
+            parpadeo = 0;
+          } else {
+            tft.setCursor(10, 85);
+            tft.setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+            tft.setTextSize(3);
+            tft.print("volver");
+            seleccionar = 1;
+            parpadeo = 0;
+          }
+        }
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
+          tft.setCursor(10, 85);
+          tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+          tft.setTextSize(3);
+          tft.print("volver");
+          seleccionar = 0;
+          parpadeo = TIEMPO_PARPADEO;
+          if(valorEncoder >= 3){
+            valorDisplay = 1;
+          }else {
+            valorDisplay --;
+          }
+          valorEncoder = 0;
+        }
+      }
       break;
     case ELIMINAR_PER:
       if (flagSWEncoder) {
@@ -3467,7 +5142,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(10, 110);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
@@ -3495,7 +5170,7 @@ void display() {
             parpadeo = 0;
           }
         }
-        if (valorEncoder >= 3 || valorEncoder <= -1) {
+        if (valorEncoder >= 3 || valorEncoder <= -3) {
           tft.setCursor(60, 110);
           tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
           tft.setTextSize(3);
