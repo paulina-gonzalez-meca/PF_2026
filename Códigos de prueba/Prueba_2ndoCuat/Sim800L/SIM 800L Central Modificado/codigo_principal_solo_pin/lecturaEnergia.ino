@@ -1,4 +1,5 @@
 void lecturaEnergia(){
+  /*
   if(tiempoCorte >= 200){
     if(flagCorte == 0){
       if(!digitalRead(PIN_ENERGIA)){
@@ -23,7 +24,7 @@ void lecturaEnergia(){
       }
     }
   }
-  /*
+  */
    int lectura = analogRead(PIN_ENERGIA);
    int voltaje = map(lectura, 0, 2700, 0, 12);
    float lecturaVoltaje = (voltaje - 0.4) * 10/43;
@@ -44,5 +45,4 @@ void lecturaEnergia(){
       flagCorte = 0;
     }
   }
-  */
 }
