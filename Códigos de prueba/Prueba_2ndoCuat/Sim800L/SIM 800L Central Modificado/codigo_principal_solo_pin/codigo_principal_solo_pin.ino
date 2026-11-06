@@ -1,127 +1,63 @@
 #include "BluetoothSerial.h"
 #include <HardwareSerial.h>
-#include <SPI.h>
-#include <nRF24L01.h>
-#include <RF24.h>
-#include "SPI.h"
-#include "Adafruit_GFX.h"
-#include "Adafruit_ILI9341.h"
+//#include <SPI.h>
+//#include <nRF24L01.h>
+//#include <RF24.h>
 
-#define RX_PIN 19
-#define TX_PIN 21
-#define PIN_ENERGIA 35
-#define PIN_CE 5
-#define PIN_CSN 15
-#define PIN_RST 22
-#define TFT_DC 14
-#define TFT_CS 32
-#define TFT_MOSI 2
-#define TFT_CLK 17
-#define TFT_RST 27
-#define TFT_MISO 16
-#define TFT_BL 12
-#define ENCODER_A_PIN 25
-#define ENCODER_B_PIN 26
-#define ENCODER_SW_PIN 39
-
-#define TIEMPO_DEBOUNCE 200
-#define TIEMPO_PARPADEO 500
-#define TIMEOUT_AGREGAR 1000
-#define TIEMPO_RST 100               // Tiempo reset sms
-#define TIEMPO_ESTABILIDAD_RST 3000  // Tiempo post reset#define TFT_DC 14
 #define TIEMPO_ENVIAR_NRF 5000
 #define TIEMPO_ENVIAR_SMS 5000
 #define TIEMPO_ENERGIA_PERIFERICOS 100000
 #define TIEMPO_LED 100
 #define TIEMPO_COMPROBAR 1000
+#define PIN_ENERGIA 35
+#define PIN_PULSADOR 2
+#define PIN_CE 5
+#define PIN_CSN 15
+#define PIN_LED1 12
+#define PIN_LED2 14
 #define TIMEOUT 2000
 #define CONFIG_TIMEOUT 1000
-#define TIEMPO_CONECTAR_PER 1000
-
-#define ANCHO 18
+#define TAM_SMS 10
+#define TAM_EMG 10
 #define TAM_TR 10
 #define TAM_NRF 10
-
+// RST SMS
+#define PIN_RST 22                   // Pin Reset SMS
+#define TIEMPO_RST 100               // Tiempo reset sms
+#define TIEMPO_ESTABILIDAD_RST 3000  // Tiempo post reset
 HardwareSerial sim800l(2);
 BluetoothSerial SerialBT;
 
 class per {
 public:
-  char nombreInterno[4] = { "" };
-  char nombreExterno[5] = { "----" };
-  char nombreSensor1[5] = { "----" };
-  char nombreSensor2[5] = { "----" };
+  String nombreInterno;
+  char nombreExterno[5] = {""};
+  char nombreSensor1[5] = {""};
+  char nombreSensor2[5] = {""};
   int tipoSensor1;
   int tipoSensor2;
-  String lecturaSensor1 = "-";
-  String lecturaSensor2 = "-";
-  int emergenciaS1 = 0;
-  int emergenciaS2 = 0;
-  bool flagEmgS1 = 0;
-  bool flagEmgS2 = 0;
-  int indiceNombrePer = 0;
-  int indiceNombreS1 = 0;
-  int indiceNombreS2 = 0;
-  int umbralMinS1 = 0;
-  int umbralMinS2 = 0;
-  int umbralMaxS1 = 0;
-  int umbralMaxS2 = 0;
-  bool alertaS2[20] = { 0 };
-  bool alertaS1[20] = { 0 };
-  int bateria = 0;
+  bool alerta[20] = {0};
   per() {
-    nombreInterno;
+    nombreInterno = "nombrePeriferico";
     nombreExterno;
     nombreSensor1;
     nombreSensor2;
     tipoSensor1 = 0;
     tipoSensor2 = 0;
-    lecturaSensor1;
-    lecturaSensor2;
-    emergenciaS1;
-    emergenciaS2;
-    flagEmgS1;
-    flagEmgS2;
-    alertaS1;
-    alertaS2;
-    indiceNombrePer;
-    indiceNombreS1;
-    indiceNombreS2;
-    bateria;
+    alerta;
   }
 };
 
 const uint64_t direccion = 0xF0F0F0F0E1LL;
-
-RF24 radio(PIN_CE, PIN_CSN);
-
-char letras[27] = { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
-char numeros[11] = { "1234567890" };
-volatile int valorEncoder = 0;
-int ultimoValorCLK = 0;
-int ultimoValorDT = 0;
-volatile int debounceSWEncoder = 0;
-volatile int tiempoAgregarPer = 0;
-volatile int parpadeo = 0;
-volatile unsigned int tiempoConectar = 0;
-int valorDisplay = 1;
-int modificarUsuario = 0;
-int modificarPer = 0;
-int eliminar = 0;
-bool seleccionar = 0;
-bool flagSWEncoder = 0;
-char nombreEliminar[4] = "";
+const uint64_t direccionConectar = 0xF0F0F0F0E0LL;
+//RF24 radio(PIN_CE, PIN_CSN);
 char mensajeRecibidoNRF[32];
 bool flagCorte = 1;
 bool mandandoSMS = 0;
 bool respuestaNRF = 0;
 bool terminarGSMS = 0;
-bool eliminarTR = 0;
 bool flagMensajePulsador = 0;
 int cicloNRF = 0;
-int emgMandarSMS = 0;
-int indicePerSMS = 0;
-bool flagMensajeCorte = 0;
 volatile int tiempoDelay = 0;
 unsigned long inicio = 0;
 bool flagSenial = 0;
@@ -129,6 +65,8 @@ volatile int timerSMS = 0;
 volatile int timerNRF = 0;
 volatile int timerEng = 0;
 volatile int tiempoComprobar = 0;
+volatile int tiempoLed1 = 0;
+volatile int tiempoLed2 = 0;
 volatile int tiempoPulsador = 0;
 volatile int tiempoComandos = 0;
 volatile int timerLecturaSim = 0;
@@ -136,68 +74,30 @@ volatile int timerLecturaPin = 0;
 volatile int timerResetSim = 0;
 volatile int tiempoCorte = 0;
 int indiceNum = 0;
+int indiceEng = 0;
 String trama = "";
 String tramaProceso = "";
 String bufferRespuesta = "";
 int ind = 0;
+bool decoEmg = 0;
 String respuesta[5];
-char numeroUsBackup[15];
-char nombreUsBackup[5];
-char nombrePerBackup[5];
-char nombreS1Backup[5];
-char nombreS2Backup[5];
 
 per perifericos[20];
 int indicePerifericos = 0;
+String mensajesSMS[TAM_SMS];
+int indiceMensajesSMS = 0;
+String mensajesNRFEMG[TAM_EMG];
+int indiceMensajesNRFEMG = 0;
 String mensajesNRFTR[TAM_TR];
 int indiceMensajesNRFTR = 0;
 String mensajesNRF[TAM_NRF];
 int indiceMensajesNRF = 0;
 struct matriz {
-  char numeroUs[15] = {"+"};
+  char numeroUs[15];
   char nombreUs[5];
-  int indiceNumeroUs = 1;
-  int indiceNombreUs = 0;
 };
 matriz usuario[20] = {};
 int indiceUsuario = 0;
-
-
-typedef enum {  // state machine
-  ESPERA,
-  ENVIO_CONECTAR
-} PASOS_CONECTAR_t;
-PASOS_CONECTAR_t CONECTAR_CEN;
-
-typedef enum {  // state machine
-  INICIO,
-  USUARIO,
-  EDITAR_US,
-  EDITAR_NOMBRE_US,
-  EDITAR_NUM_US,
-  AGREGAR_NOMBRE_US,
-  AGREGAR_NUM_US,
-  PERIFERICO,
-  MOSTRAR_PER,
-  EDITAR_PER,
-  EDITAR_NOMBRE_PER,
-  EDITAR_NOMBRES1_PER,
-  EDITAR_ALERTAS1_PER,
-  EDITAR_UMBRALS1_PER,
-  EDITAR_UMBRALMAXS1_PER,
-  EDITAR_UMBRALMINS1_PER,
-  EDITAR_NOMBRES2_PER,
-  EDITAR_ALERTAS2_PER,
-  EDITAR_UMBRALS2_PER,
-  EDITAR_UMBRALMINS2_PER,
-  EDITAR_UMBRALMAXS2_PER,
-  ELIMINAR_PER,
-  AGREGAR_PER,
-  AGREGAR_PER_NOMBRE,
-  AGREGAR_PER_NS1,
-  AGREGAR_PER_NS2
-} PASOS_DISPLAY_t;
-PASOS_DISPLAY_t TFT_DISPLAY;
 
 typedef enum {
   PASO1,
@@ -222,13 +122,23 @@ ESTADO_RESET_t PRST;
 
 
 typedef enum {  // state machine
+  EMG,
   APD,
-  BAT,
+  LUZ,
   RSLT_S1,
   RSLT_S2,
+  RSLT_S3
 } PASOS_DECODIFICADOR_t;
 
 PASOS_DECODIFICADOR_t PDECO;
+
+struct TramaPausada_t {
+  PASOS_DECODIFICADOR_t pasoDeco;
+  String tramaPausa;
+  int indice;
+  String respuestas[5];
+};
+TramaPausada_t tramaPausada;
 
 // Máquina de estados para secuencia de diagnóstico SIM800L
 typedef enum {
@@ -249,55 +159,36 @@ typedef enum {
 PASOS_GSM_t pasoGSM = GSM_INICIO;
 
 hw_timer_t *timer = NULL;  // timer
+
 void IRAM_ATTR onTimer();  // function interrupts every 1ms
-
-
-void IRAM_ATTR rotacionEncoder();
-void IRAM_ATTR botonEncoder();
-
-int displayLetras(char nombre[], int &indiceNombre);
-int displayNum(char numero[], int &indiceNumero);
 void gestionarComandosGSM();
 
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
-
 void setup() {
-  SPI.begin(TFT_CLK, TFT_MISO, TFT_MOSI);
-
+  pinMode(PIN_LED1, OUTPUT);
+  pinMode(PIN_LED2, OUTPUT);
   pinMode(PIN_RST, OUTPUT);  // Pin Reset es output
+
+
+  digitalWrite(PIN_LED1, HIGH);
+  digitalWrite(PIN_LED2, HIGH);
   digitalWrite(PIN_RST, HIGH);  // Pin reset high está desactivado
 
   SerialBT.begin("Central_Dev");  // Nombre del dispositivo Bluetooth
-  sim800l.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
+  sim800l.begin(115200, SERIAL_8N1, 16, 17);
 
   strcpy(usuario[indiceUsuario].numeroUs, "+5491161386381");
   indiceUsuario ++;
+  // numeros.push_back("+5491161386381");5491123692363
 
   pinMode(PIN_ENERGIA, INPUT_PULLUP);
-  radio.begin();
-  radio.openReadingPipe(1, direccion);
-  radio.openWritingPipe(direccion);
-  radio.setPALevel(RF24_PA_MAX);
-  radio.startListening();
-  
-  Serial.begin(9600);
-  tft.begin();
-  tft.setRotation(3);
-  tft.fillScreen(ILI9341_BLACK);
+  pinMode(PIN_PULSADOR, INPUT);
+  // radio.begin();
+  // radio.openReadingPipe(1, direccionCentral);
+  // radio.setPALevel(RF24_PA_MAX);
+  // radio.startListening();
 
-  pinMode(ENCODER_A_PIN, INPUT);
-  pinMode(ENCODER_B_PIN, INPUT);
-  pinMode(ENCODER_SW_PIN, INPUT);
-  pinMode(TFT_BL, OUTPUT);
-
-  digitalWrite(TFT_BL, HIGH);
-
-  attachInterrupt(digitalPinToInterrupt(ENCODER_A_PIN), rotacionEncoder, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ENCODER_SW_PIN), botonEncoder, FALLING);
-
-  TFT_DISPLAY = INICIO;
   PSMS = PASO1;
-  PDECO = APD;
+  PDECO = EMG;
   PRST = RST;
 
   // Timer de sistema activado antes de iniciar el conteo de GSM
@@ -306,40 +197,11 @@ void setup() {
   timerAlarm(timer, 1000, true, 0);  // tick cada 1 ms
   tiempoComandos = 0;
 
-  ultimoValorCLK = digitalRead(ENCODER_A_PIN);
-  ultimoValorDT = digitalRead(ENCODER_B_PIN);
-
-  tft.setCursor(10, 10);
-  tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-  tft.setTextSize(4);
-  tft.print("USUARIOS");
-  tft.setCursor(10, 70);
-  tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-  tft.setTextSize(4);
-  tft.print("PERIFERICOS");
-
-  strcpy(usuario[0].nombreUs, "AAAA");
-  strcpy(usuario[1].nombreUs, "BBBB");
-  strcpy(usuario[2].nombreUs, "CCCC");
-  strcpy(usuario[3].nombreUs, "DDDD");
-  strcpy(usuario[4].nombreUs, "EEEE");
-  strcpy(usuario[5].nombreUs, "FFFF");
-  strcpy(usuario[6].nombreUs, "GGGG");
-  strcpy(usuario[7].nombreUs, "HHHH");
-  strcpy(usuario[8].nombreUs, "IIII");
-  strcpy(usuario[9].nombreUs, "JJJJ");
-  indiceUsuario = 10;
-  strcpy(perifericos[0].nombreExterno, "1111");
-  strcpy(perifericos[1].nombreExterno, "2222");
-  strcpy(perifericos[2].nombreExterno, "3333");
-  strcpy(perifericos[3].nombreExterno, "4444");
-  strcpy(perifericos[4].nombreExterno, "5555");
-  strcpy(perifericos[5].nombreExterno, "6666");
-  strcpy(perifericos[6].nombreExterno, "7777");
-  strcpy(perifericos[7].nombreExterno, "8888");
-  strcpy(perifericos[8].nombreExterno, "9999");
-  strcpy(perifericos[9].nombreExterno, "0000");
-  indicePerifericos = 10;
+  // Send "AT" a couple of times to let auto-baud sync, then lock it to 9600
+  sim800l.println("AT");
+  delay(500);
+  sim800l.println("AT+IPR=115200"); // Locks module hardware permanently to 9600
+  delay(500);
 }
 
 void loop() {
@@ -348,42 +210,121 @@ void loop() {
     if(!mandandoSMS){
     verificarSenalSIM800L();
     }
-  }
-  gestionarComandosGSM();
-  lecturaEnergia();
 
-  display();
-
-  if(indiceMensajesNRF >= 1 && !mandandoSMS){
-    if(timerNRF >= TIEMPO_ENVIAR_NRF){
-      if(respuestaNRF == 1){
-        if(eliminarPrimero(mensajesNRF, TAM_NRF)){
-          indiceMensajesNRF --;
-          respuestaNRF = 0;
-          cicloNRF = 0;
-        }
-      }
-      else if(respuestaNRF == 0 && cicloNRF < 5){
-        if(indiceMensajesNRF >= 1){
-          mandarNRF(mensajesNRF[0], 0xF0F0F0F0E0LL);
-        }
-        cicloNRF += 1;
-        timerNRF = 0;
-        if(mensajesNRF[0].endsWith("recibido*")){
-          respuestaNRF = 1;
-        }
-      }
-      else if(respuestaNRF == 0 && cicloNRF >= 5){
-        if(eliminarPrimero(mensajesNRF, TAM_NRF)){
-          indiceMensajesNRF --;
-          respuestaNRF = 0;
-          cicloNRF = 0;
+    //comprobarSenalSIM800L();
+    if (tiempoLed1 >= TIEMPO_LED) {
+      digitalWrite(PIN_LED1, LOW);
+    }
+    if (indiceMensajesSMS >= 1) {
+      if (timerSMS >= TIEMPO_ENVIAR_SMS) {
+        if (indiceNum < indiceUsuario) {
+          mandandoSMS = 1;
+          if(mandarSMS(mensajesSMS[0], usuario[indiceNum].numeroUs)){
+            indiceNum += 1;
+          }
+        } else{
+          if(eliminarPrimero(mensajesSMS, TAM_SMS)){
+            mandandoSMS = 0;
+            indiceMensajesSMS --;
+            indiceNum = 0;
+          }
         }
       }
     }
-  } 
-  recibirNRF();
-  decodificador();
+  }
+  gestionarComandosGSM();
+
+
+  //if(tiempoLed2 >= TIEMPO_LED){
+  //  digitalWrite(PIN_LED2, LOW);
+  //}
+  if (digitalRead(PIN_PULSADOR) == 0 && flagMensajePulsador == 0) {
+    flagMensajePulsador = 1;
+    tiempoPulsador = 0;
+  }
+  if (flagMensajePulsador) {
+    /*if (digitalRead(PIN_PULSADOR) && tiempoPulsador <= 1000) {
+      mensajesNRF[indiceMensajesNRF] = "probando NRF";
+      indiceMensajesNRF ++;
+      flagMensajePulsador = 0;
+    } else */if (digitalRead(PIN_PULSADOR) && tiempoPulsador > 1000) {
+      mensajesSMS[indiceMensajesNRF] = "probando SMS";
+      SerialBT.println("probandoSMS");
+      indiceMensajesNRF ++;
+      flagMensajePulsador = 0;
+    }
+  }
+  while (Serial.available() > 0) {
+    char c = Serial.read();
+
+    // Start of a new packet: clear any stale text
+    if (c == '#') {
+      trama = "#";
+    }
+    // Capturing body characters
+    else if (trama.length() > 0) {
+      trama += c;
+
+      if (c == '*') {
+        trama.trim();
+        Serial.println(trama);
+        if (trama.startsWith("#1,")) {
+          mensajesNRFEMG[indiceMensajesNRFEMG] = trama;
+          indiceMensajesNRFEMG ++;
+        } else {
+          mensajesNRFTR[indiceMensajesNRFTR] = trama;
+          indiceMensajesNRFTR ++;
+        }
+        trama = "";
+      }
+    }
+  }
+  lecturaEnergia();
+
+  /* if(mensajesNRF.empty() != true){
+    if(timerNRF >= TIEMPO_ENVIAR_NRF){
+      if(respuestaNRF == 1){
+        respuestaNRF = 0;
+        cicloNRF = 0;
+        mensajesNRF.erase(mensajesNRF.begin());
+        mensajesNRF.erase(mensajesNRF.begin());
+      }
+      else if(respuestaNRF == 0 && cicloNRF < 5){
+        if(mensajesNRF.size() >= 2){
+          mandarNRF(mensajesNRF[0], direcciones[mensajesNRF[1].toInt()]);
+        }
+        cicloNRF += 1;
+        timerNRF = 0;
+        if(mensajesNRF[0] == "recibido"){
+          respuestaNRF = 0;
+          cicloNRF = 0;
+          mensajesNRF.erase(mensajesNRF.begin());
+          mensajesNRF.erase(mensajesNRF.begin());
+        }
+      }
+      else if(respuestaNRF == 0 && cicloNRF >= 5){
+        cicloNRF = 0;
+        if(mensajesNRF[0] == "v?"){
+          perifericos[mensajesNRF[1].toInt()].vivo = 0;
+        }
+        mensajesNRF.erase(mensajesNRF.begin());
+        mensajesNRF.erase(mensajesNRF.begin());
+      }
+    }
+  } */
+  // recibirNRF();
+  //recibirSMS();
+  // decodificador();
+  // perifericosEnergia();
+
+  // qué dice el sim
+  /*if (timerLecturaSim >= 500) {
+  
+    char c = sim800l.read();
+    SerialBT.write(c); // para imprimir lo q devuelve el sim
+
+    timerLecturaSim = 0;
+  }*/
 
   // lectura fuente
   /*if (timerLecturaPin >= 1000){
@@ -651,6 +592,8 @@ void gestionarComandosGSM() {
         SerialBT.println("SIM800L Ready");
         bufferRespuesta = "";
         terminarGSMS = 1;
+        digitalWrite(PIN_LED1, LOW);
+        digitalWrite(PIN_LED2, LOW);
         pasoGSM = GSM_READY;
       }
       else if (bufferRespuesta.indexOf("ERROR") != -1){
@@ -710,12 +653,15 @@ bool verificarSenalSIM800L() {
               // RSSI entre 10 y 31 indica señal aceptable/buena
               if (rssi >= 10 && rssi <= 31) {
                 //SerialBT.println("HAY SEÑAL ESTABLE");
+                digitalWrite(PIN_LED2, HIGH);
                 resultado = true;
               } else {
                 //SerialBT.println("NO HAY SEÑAL ESTABLE");
+                digitalWrite(PIN_LED2, LOW);
               }
             }
           } else {
+            digitalWrite(PIN_LED2, LOW);
           }
 
           // Reiniciar para la próxima verificación
@@ -727,6 +673,7 @@ bool verificarSenalSIM800L() {
       // Paso 4: Control de Timeout si el SIM800L no responde
       if (tiempoComandos >= TIMEOUT) {
         SerialBT.println("TIMEOUT");
+        digitalWrite(PIN_LED2, LOW);
         SENAL = IDLE;
       }
       break;
@@ -759,31 +706,9 @@ void reiniciarSIM800L() {
       break;
   }
 }
-
-void rotacionEncoder() {
-  int valorCLK = digitalRead(ENCODER_A_PIN);
-  int valorDT = digitalRead(ENCODER_B_PIN);
-
-  if (valorCLK != ultimoValorCLK) {
-    if (valorDT != valorCLK) {
-      valorEncoder--;
-    } else {
-      valorEncoder++;
-    }
-  }
-
-  ultimoValorCLK = valorCLK;
-  ultimoValorDT = valorDT;
-}
-
-void botonEncoder() {
-  if (debounceSWEncoder >= TIEMPO_DEBOUNCE) {
-    debounceSWEncoder = 0;
-    flagSWEncoder = 1;
-  }
-}
-
 void IRAM_ATTR onTimer() {
+  tiempoLed1 += 1;
+  tiempoLed2 += 1;
   tiempoPulsador += 1;
   tiempoDelay += 1;
   timerSMS += 1;
@@ -795,8 +720,4 @@ void IRAM_ATTR onTimer() {
   timerLecturaPin += 1;
   timerResetSim += 1;
   tiempoCorte += 1;
-  tiempoAgregarPer += 1;
-  debounceSWEncoder += 1;
-  parpadeo += 1;
-  tiempoConectar += 1;
 }
