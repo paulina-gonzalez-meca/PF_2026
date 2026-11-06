@@ -13,6 +13,8 @@
 #define CE_PIN  PIN_PA3
 #define CSN_PIN PIN_PA7
 #define PIN_LED PIN_PB1
+#define PIN_ENERGIA PIN_PA0
+
 
 RF24 radio(CE_PIN, CSN_PIN, 1000000);
 

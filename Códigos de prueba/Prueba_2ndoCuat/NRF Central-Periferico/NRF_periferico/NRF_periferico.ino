@@ -2,7 +2,7 @@
 #include <nRF24L01.h>
 #include <RF24.h>
 #include "Adafruit_GFX.h"
-#include "Adafruit_ILI9341.h"
+// #include "Adafruit_ILI9341.h"
 
 #define TIEMPO_LED 1000
 #define PRESSED 0

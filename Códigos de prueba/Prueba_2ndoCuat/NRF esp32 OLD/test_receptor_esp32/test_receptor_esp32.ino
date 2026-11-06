@@ -13,8 +13,7 @@ RF24 radio(PIN_CE, PIN_CSN, 1000000);
 // --------------------------------------
 // SHARED CONFIGURATION
 // --------------------------------------
-const uint64_t address = 0xF0F0F0F0E1LL;
-const uint8_t CANAL_RF = 76;
+const uint64_t direccionConectar = 0xF0F0F0F0E0LL;
 
 char receivedMessage[32];
 
@@ -24,6 +23,7 @@ void setup() {
   delay(500);
 
   Serial.println("Initializing NRF24L01 receiver...");
+  //SPI.begin(18,19,21);
 
   if (!radio.begin()) {
 
@@ -36,20 +36,9 @@ void setup() {
 
   Serial.println("NRF24L01 initialized successfully.");
 
-  radio.setChannel(CANAL_RF);
-  radio.setDataRate(RF24_1MBPS);
-  radio.setPALevel(RF24_PA_MIN);
-
-  radio.setAutoAck(false);
-
-  radio.disableDynamicPayloads();
-  radio.setPayloadSize(sizeof(receivedMessage));
-
-  radio.setAddressWidth(5);
-  radio.setCRCLength(RF24_CRC_16);
-
-  radio.openReadingPipe(1, address);
-
+  radio.openWritingPipe(direccionConectar);
+  radio.openReadingPipe(1, direccionConectar);
+  radio.setPALevel(RF24_PA_MAX);
   radio.startListening();
 
   Serial.println("Receiver listening...");
