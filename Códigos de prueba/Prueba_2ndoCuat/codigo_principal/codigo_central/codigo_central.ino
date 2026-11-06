@@ -6,6 +6,8 @@
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
 
+TaskHandle_t sim;
+
 #define RX_PIN 19
 #define TX_PIN 21
 #define PIN_ENERGIA 35
@@ -339,16 +341,19 @@ void setup() {
   strcpy(perifericos[8].nombreExterno, "9999");
   strcpy(perifericos[9].nombreExterno, "0000");
   indicePerifericos = 10;
+
+  xTaskCreatePinnedToCore(
+  simCode,
+  "sim",
+  10000,
+  NULL,
+  1,
+  &sim,
+  1
+);
 }
 
 void loop() {
-  // Manejo secuencial no bloqueante del módulo GSM
-  if (terminarGSMS) {
-    if(!mandandoSMS){
-    verificarSenalSIM800L();
-    }
-  }
-  gestionarComandosGSM();
   lecturaEnergia();
 
   display();
@@ -383,7 +388,7 @@ void loop() {
   } 
   recibirNRF();
   decodificador();
-
+  umbral();
   // lectura fuente
   /*if (timerLecturaPin >= 1000){
   int lectura = analogRead(PIN_ENERGIA);
@@ -394,6 +399,18 @@ void loop() {
     SerialBT.println(" ");
 
   }*/
+}
+
+void simCode(void *pvParameters){
+  for (;;) {
+    if (terminarGSMS) {
+      manejoMandarSMS();
+      if(!mandandoSMS){
+      verificarSenalSIM800L();
+      }
+    }
+    gestionarComandosGSM();
+  }
 }
 
 void gestionarComandosGSM() {
