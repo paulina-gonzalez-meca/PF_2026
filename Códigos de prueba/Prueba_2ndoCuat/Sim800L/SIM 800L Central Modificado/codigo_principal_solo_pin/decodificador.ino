@@ -104,18 +104,14 @@ void decodificador(){
             tramaProceso.remove(0, 2);
             perifericos[ind].lecturaSensor2 = "-";
             eliminarTR = 1;
-            indpr = ind;
             ind = 0;
-            end = 1;
             PDECO = APD;
           }
           else{
             perifericos[ind].lecturaSensor2 = "ERROR";
             tramaProceso.remove(0, tramaProceso.indexOf('*')+1);
             eliminarTR = 1;
-            indpr = ind;
             ind = 0;
-            end = 1;
             PDECO = APD;
           }
         }
@@ -124,18 +120,14 @@ void decodificador(){
             perifericos[ind].lecturaSensor2 = "-";
             tramaProceso.remove(0, tramaProceso.indexOf('*')+1);
             eliminarTR = 1;
-            indpr = ind;
             ind = 0;
-            end = 1;
             PDECO = APD;
           }
           else{
             perifericos[ind].lecturaSensor2 = tramaProceso.substring(0, tramaProceso.indexOf('*'));
             tramaProceso.remove(0, tramaProceso.indexOf('*')+1);
             eliminarTR = 1;
-            indpr = ind;
             ind = 0;
-            end = 1;
             PDECO = APD;
           }
         }

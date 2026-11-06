@@ -4,15 +4,14 @@ void recibirNRF(){
     radio.read(&mensajeRecibidoNRF, sizeof(mensajeRecibidoNRF));
     trama = String(mensajeRecibidoNRF);
     trama.trim();
-    if(trama.startsWith("#1,") && trama.endsWith("*")){
+    if(trama.startsWith("#P") && trama.endsWith("*")){
       Serial.println(trama);
-      emergencias.push_back(trama);
+      if(indiceMensajesNRFTR < TAM_TR){
+        mensajesNRFTR[indiceMensajesNRFTR] = trama;
+        indiceMensajesNRFTR ++;
+      }
     }
-    else if(trama.startsWith("#0,") && trama.endsWith("*")){
-      Serial.println(trama);
-      tramas.push_back(trama);
-    }
-    else if (trama == "recibido"){
+    else if (trama.startsWith(mensajesNRF[0].substring(0, mensajesNRF[0].indexOf(',')))){
       Serial.println(trama);
       respuestaNRF = 1;
     }
