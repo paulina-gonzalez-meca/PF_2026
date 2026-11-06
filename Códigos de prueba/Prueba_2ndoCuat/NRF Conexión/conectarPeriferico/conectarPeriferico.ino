@@ -4,9 +4,9 @@
 
 #define TIEMPO_CONECTAR 2000
 #define TIMEOUT_CONECTAR 10000
-#define PIN_CE PIN_PA3
-#define PIN_CSN PIN_PA7
-#define PIN_LED PIN_PB1
+#define PIN_CE /*PIN_PA3*/4
+#define PIN_CSN /*PIN_PA7*/5
+#define PIN_LED /*PIN_PB1*/2
 
 unsigned long tiempoActual = 0;
 unsigned long tiempoAnterior = 0;
@@ -20,6 +20,7 @@ char nombre[4];
 RF24 radio(PIN_CE, PIN_CSN);
 
 void setup() {
+  Serial.begin(9600);
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED, HIGH);
   radio.begin();
@@ -27,13 +28,14 @@ void setup() {
   radio.setPALevel(RF24_PA_MAX);
   radio.startListening();
   digitalWrite(PIN_LED, LOW);
-
-  //snprintf(mensaje, sizeof(mensaje), "#C,%d,%d*", tipoSensor1, tipoSensor2);
+  tiempoAnterior = millis();
+  snprintf(mensaje, sizeof(mensaje), "#C,%d,%d*", tipoSensor1, tipoSensor2);
 }
 
 void loop() {
   tiempoActual = millis();
   if (tiempoActual - tiempoAnterior >= TIMEOUT_CONECTAR) {
+  digitalWrite(PIN_LED, HIGH);
     if (conectar(mensaje, direccionConectar)) {
       Serial.println("conectado");
       Serial.print(nombre[0]);
@@ -42,14 +44,17 @@ void loop() {
       tiempoAnterior = tiempoActual;
     }
   } else {
+    digitalWrite(PIN_LED, LOW);
+      tiempoAnterior = tiempoActual;
     Serial.println("timeout");
   }
 }
 bool conectar(char mensajeConectar[], uint64_t direccion) {
-  if (tiempoActual - tiempoAnterior % TIEMPO_CONECTAR == 0) {
+  if ((tiempoActual - tiempoAnterior) % TIEMPO_CONECTAR == 0) {
     radio.stopListening();
     radio.openWritingPipe(direccion);
     radio.write(mensajeConectar, strlen(mensajeConectar) + 1);
+    Serial.print(mensajeConectar);
     radio.startListening();
   }
   if (radio.available() > 0) {

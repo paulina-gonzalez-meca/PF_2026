@@ -4997,7 +4997,7 @@ void display() {
     case AGREGAR_PER:
     if(indicePerifericos < 20){
       if(tiempoAgregarPer <= TIMEOUT_AGREGAR){
-        if(conectar(indicePerifericos, direccion, tiempoConectar)){
+        if(conectar(String(perifericos[indicePerifericos].nombreInterno), direccion, tiempoConectar)){
           Serial.println("conectado");
           Serial.println(String(perifericos[indicePerifericos].tipoSensor1));
           Serial.println(String(perifericos[indicePerifericos].tipoSensor2));

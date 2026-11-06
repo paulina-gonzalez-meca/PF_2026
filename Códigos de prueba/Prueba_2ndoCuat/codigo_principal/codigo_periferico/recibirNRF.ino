@@ -1,4 +1,4 @@
-void recibirNRF(){
+void recibirNRF(){/*
   if(radio.available() > 0){
     memset(mensajeRecibidoNRF, 0, sizeof(mensajeRecibidoNRF));
     radio.read(&mensajeRecibidoNRF, sizeof(mensajeRecibidoNRF));
@@ -12,5 +12,5 @@ void recibirNRF(){
       respuestaNRF = 1;
     }
     trama = "";
-  }
+  }*/
 }

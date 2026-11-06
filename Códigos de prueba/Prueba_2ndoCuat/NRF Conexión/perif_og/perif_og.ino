@@ -4,12 +4,12 @@
 
 #define TIEMPO_CONECTAR 2000
 #define TIMEOUT_CONECTAR 10000
-#define PIN_CE 5
-#define PIN_CSN 15
-#define PIN_MISO 16
-#define PIN_MOSI 2
-#define PIN_IRQ 4
-#define PIN_SCK 17
+#define PIN_CE 4
+#define PIN_CSN 5
+// #define PIN_MISO 16
+// #define PIN_MOSI 2
+// #define PIN_IRQ 4
+// #define PIN_SCK 17
 
 volatile int tiempoConectar = 0;
 int tipoSensor1 = 1;
@@ -26,7 +26,7 @@ RF24 radio(PIN_CE, PIN_CSN);
 
 void setup() {
   Serial.begin(9600);
-  SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI);
+  // SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI);
    Serial.println("SPI");
 
   radio.begin();

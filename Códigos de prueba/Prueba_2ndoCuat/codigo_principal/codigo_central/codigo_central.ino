@@ -27,7 +27,7 @@ TaskHandle_t sim;
 
 #define TIEMPO_DEBOUNCE 200
 #define TIEMPO_PARPADEO 500
-#define TIMEOUT_AGREGAR 1000
+#define TIMEOUT_AGREGAR 20000
 #define TIEMPO_RST 100               // Tiempo reset sms
 #define TIEMPO_ESTABILIDAD_RST 3000  // Tiempo post reset#define TFT_DC 14
 #define TIEMPO_ENVIAR_NRF 5000
@@ -276,6 +276,7 @@ void setup() {
 
   pinMode(PIN_ENERGIA, INPUT_PULLUP);
   radio.begin();
+  radio.setAutoAck(false);
   radio.openReadingPipe(1, direccion);
   radio.openWritingPipe(direccion);
   radio.setPALevel(RF24_PA_MAX);

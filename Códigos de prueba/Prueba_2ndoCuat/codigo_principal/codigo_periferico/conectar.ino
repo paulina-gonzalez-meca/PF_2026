@@ -1,7 +1,8 @@
 bool conectar(char mensajeConectar[], uint64_t direccion) {
-  if (tiempoConeccion - tiempoConeccionAnterior % TIEMPO_CONECTAR == 0) {
+  if ((tiempoConeccion - tiempoConeccionAnterior) % TIEMPO_CONECTAR == 0) {
+    Serial.print(".");
+    Serial.print(String(mensajeConectar));
     radio.stopListening();
-    radio.openWritingPipe(direccion);
     radio.write(mensajeConectar, strlen(mensajeConectar) + 1);
     radio.startListening();
   }
@@ -9,11 +10,11 @@ bool conectar(char mensajeConectar[], uint64_t direccion) {
     memset(mensajeRecibidoNRF, 0, sizeof(mensajeRecibidoNRF));
     radio.read(&mensajeRecibidoNRF, sizeof(mensajeRecibidoNRF));
     String mensajeCentralConectar = String(mensajeRecibidoNRF);
-    Serial.println(mensajeCentralConectar);
     mensajeCentralConectar.trim();
-
+    Serial.print("b");
     nombre[0] = 'P';
     if (mensajeCentralConectar.startsWith("#C,P") && mensajeCentralConectar.endsWith("*")) {
+      Serial.println(mensajeCentralConectar);
       if (isDigit(mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf('P') + 1))) {
         nombre[1] = mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf('P') + 1);
         if (mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf('P') + 2) != '*') {
