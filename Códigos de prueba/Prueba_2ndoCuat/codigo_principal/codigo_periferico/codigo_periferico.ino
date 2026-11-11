@@ -4,7 +4,8 @@
 #define TIEMPO_ENVIAR_NRF 5000
 #define TIEMPO_CONECTAR 2000
 #define TIMEOUT_CONECTAR 20000
-const uint64_t direccion = 0xF0F0F0F0E1LL;
+const uint64_t direccionA = 0xF0F0F0F0E0LL;
+const uint64_t direccionB = 0xF0F0F0F0E1LL;
 #define TAM_NRF 10
 #define PRESIONADO 0
 #define NO_PRESIONADO 1
@@ -39,9 +40,10 @@ void setup() {
   pinMode(PIN_LED, OUTPUT);
 
   radio.begin();
-  radio.openReadingPipe(1, direccion);
-  radio.openWritingPipe(direccion);
-  radio.setAutoAck(false);
+  radio.setAutoAck(true);
+  radio.setChannel(108);
+  radio.openReadingPipe(1, direccionA);
+  radio.openWritingPipe(direccionB);
   radio.setPALevel(RF24_PA_MAX);
   radio.startListening();
 
@@ -72,8 +74,8 @@ void loop() {
     tiempoConeccion = millis();
     digitalWrite(PIN_LED, HIGH);
     if(tiempoConeccion - tiempoConeccionAnterior <= TIMEOUT_CONECTAR){
-      if (conectar(mensaje, direccion)) {
-        
+      if (conectar(mensaje)) {
+        coneccion = 0;
         Serial.println("CONECTANDO");
       }
     }
@@ -97,7 +99,7 @@ void loop() {
       }
       else if(respuestaNRF == 0 && cicloNRF < 5){
         if(indiceMensajesNRF >= 1){
-          mandarNRF(mensajesNRF[0], direccion);
+          mandarNRF(mensajesNRF[0]);
         }
         cicloNRF += 1;
         tiempoNRF = millis();
