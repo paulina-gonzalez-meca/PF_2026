@@ -21,9 +21,9 @@ TaskHandle_t sim;
 #define PIN_RST 22
 #define TFT_DC 14
 #define TFT_CS 32
-#define TFT_MOSI 27
-#define TFT_MISO 12
-#define TFT_CLK 17
+#define TFT_MOSI 12
+#define TFT_MISO 13
+#define TFT_CLK 27
 // #define TFT_BL 12
 #define ENCODER_A_PIN 25
 #define ENCODER_B_PIN 26
@@ -272,11 +272,11 @@ int displayLetras(char nombre[], int &indiceNombre);
 int displayNum(char numero[], int &indiceNumero);
 void gestionarComandosGSM();
 SPIClass hspi(HSPI);
-Adafruit_ILI9341 tft = Adafruit_ILI9341(&hspi, TFT_DC, TFT_CS);
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 
 void setup() {
-  SPI.begin(NRF_CLK, NRF_MISO, NRF_MOSI, PIN_CSN);
-  hspi.begin(TFT_CLK, TFT_MISO, TFT_MOSI, TFT_CS);
+  hspi.begin(NRF_CLK, NRF_MISO, NRF_MOSI, PIN_CSN);
+  SPI.begin(TFT_CLK, TFT_MISO, TFT_MOSI, TFT_CS);
 
   pinMode(PIN_RST, OUTPUT);  // Pin Reset es output
   pinMode(PIN_DTR, OUTPUT);
@@ -291,7 +291,7 @@ void setup() {
 
   pinMode(PIN_ENERGIA, INPUT_PULLUP);
   pinMode(PIN_BUZZER, OUTPUT);
-  radio.begin();
+  radio.begin(&hspi);
   radio.setAutoAck(true);
   radio.setChannel(108);
   radio.openReadingPipe(1, direccionB);

@@ -15,9 +15,9 @@
 #define PIN_MOSI 2
 #define PIN_IRQ 4
 #define PIN_SCK 17
-#define TFT_MOSI 27
-#define TFT_MISO 12
-#define TFT_CLK 17
+#define TFT_MOSI 12
+#define TFT_MISO 13
+#define TFT_CLK 27
 // #define TFT_BL 12
 #define PIN_BZZ 33
 
@@ -38,13 +38,14 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(&hspi, TFT_DC, TFT_CS);
 
 void setup() {
   Serial.begin(9600);
-  SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI, PIN_CSN);
-  hspi.begin(TFT_CLK, TFT_MISO, TFT_MOSI, TFT_CS);
+  SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI);
+  hspi.begin(TFT_CLK, TFT_MISO, TFT_MOSI);
 
-  radio.begin();
+  radio.begin(&SPI);
   radio.setAutoAck(true);
   radio.setChannel(108);
-  radio.setPALevel(RF24_PA_MAX);
+  radio.setDataRate(RF24_250KBPS);
+  radio.setPALevel(RF24_PA_LOW);
   radio.openWritingPipe(direccionConectarA);
   radio.openReadingPipe(1, direccionConectarB);
   radio.startListening();

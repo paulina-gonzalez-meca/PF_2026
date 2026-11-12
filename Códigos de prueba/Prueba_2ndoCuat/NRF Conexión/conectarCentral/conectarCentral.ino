@@ -65,6 +65,7 @@ void setup() {
   SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI);
 
   radio.begin();
+  radio.setChannel(108);
   radio.openReadingPipe(1, direccionConectar);
   radio.setPALevel(RF24_PA_MAX);
   radio.startListening();
