@@ -1,4 +1,4 @@
-#define PIN_PUERTA 4  // después cambiar por el pin final, simular con pulsador
+#define PIN_PUERTA 4  // Pin en periférico: PIN_PA0
 #define ABIERTO 1
 #define CERRADO 0
 #define DEBOUNCE 20
@@ -10,7 +10,7 @@ bool ultimaLecturaPuerta;
 unsigned long ultimoTiempoDebounce = 0;
 
 void setup() {
-  pinMode(PIN_PUERTA, INPUT);
+  pinMode(PIN_PUERTA, INPUT_PULLUP);
   Serial.begin(115200);
 }
 
@@ -29,11 +29,10 @@ bool lecturaPuerta() {
   if ((millis() - ultimoTiempoDebounce) >= DEBOUNCE) {
 
     if (lecturaPinPuerta != estadoPuerta) {
-      lecturaPinPuerta = estadoPuerta;
-
-      return estadoPuerta;
+      estadoPuerta = lecturaPinPuerta;
     }
   }
 
   ultimaLecturaPuerta = lecturaPinPuerta;
+  return estadoPuerta;
 }
