@@ -26,7 +26,7 @@ int tiempo = 0;
 RF24 radio(PIN_CE, PIN_CSN);
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   //SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI);
   SPI.begin();
   radio.begin();
@@ -37,6 +37,7 @@ void setup() {
   radio.openWritingPipe(direccionConectarB);
   radio.openReadingPipe(1, direccionConectarA);
   radio.startListening();
+  radio.setRetries(15, 15);
   
   pinMode(PIN_LED, OUTPUT);
   pinMode(PIN_SW, INPUT);

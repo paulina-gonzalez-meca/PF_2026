@@ -100,7 +100,7 @@ public:
 const uint64_t direccionA = 0xF0F0F0F0E0LL;
 const uint64_t direccionB = 0xF0F0F0F0E1LL;
 
-RF24 radio(PIN_CE, PIN_CSN);
+RF24 radio(PIN_CE, PIN_CSN, 2000000);
 
 char letras[27] = { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
 char numeros[11] = { "1234567890" };
@@ -128,6 +128,7 @@ bool flagMensajePulsador = 0;
 bool mensajeRecibidoConectar = 0;
 bool mensajeRecibidoOK = 0;
 bool conectando = 0;
+bool displayModoSleep = 1;
 int cicloNRF = 0;
 int emgMandarSMS = 0;
 int indicePerSMS = 0;
@@ -135,17 +136,18 @@ bool flagMensajeCorte = 0;
 volatile int tiempoDelay = 0;
 unsigned long inicio = 0;
 bool flagSenial = 0;
-volatile int timerSMS = 0;
-volatile int timerNRF = 0;
-volatile int timerEng = 0;
-volatile int tiempoComprobar = 0;
-volatile int tiempoPulsador = 0;
-volatile int tiempoComandos = 0;
-volatile int timerLecturaSim = 0;
-volatile int timerLecturaPin = 0;
-volatile int timerResetSim = 0;
-volatile int tiempoCorte = 0;
-volatile int tiempoSenal = 0;
+volatile long tiempoDisplay = 60000;
+volatile long timerSMS = 0;
+volatile long timerNRF = 0;
+volatile long timerEng = 0;
+volatile long tiempoComprobar = 0;
+volatile long tiempoPulsador = 0;
+volatile long tiempoComandos = 0;
+volatile long timerLecturaSim = 0;
+volatile long timerLecturaPin = 0;
+volatile long timerResetSim = 0;
+volatile long tiempoCorte = 0;
+volatile long tiempoSenal = 0;
 int indiceNum = 0;
 String trama = "";
 String tramaProceso = "";
@@ -294,9 +296,11 @@ void setup() {
   radio.begin(&hspi);
   radio.setAutoAck(true);
   radio.setChannel(108);
+  radio.enableDynamicPayloads();
+  radio.setDataRate(RF24_250KBPS);
   radio.openReadingPipe(1, direccionB);
   radio.openWritingPipe(direccionA);
-  radio.setPALevel(RF24_PA_MAX);
+  radio.setPALevel(RF24_PA_LOW);
   radio.startListening();
   
   Serial.begin(9600);
@@ -327,15 +331,6 @@ void setup() {
 
   ultimoValorCLK = digitalRead(ENCODER_A_PIN);
   ultimoValorDT = digitalRead(ENCODER_B_PIN);
-
-  tft.setCursor(10, 10);
-  tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-  tft.setTextSize(4);
-  tft.print("USUARIOS");
-  tft.setCursor(10, 70);
-  tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-  tft.setTextSize(4);
-  tft.print("PERIFERICOS");
 
   // strcpy(usuario[0].nombreUs, "AAAA");
   // strcpy(usuario[1].nombreUs, "BBBB");
@@ -382,6 +377,8 @@ strcpy(perifericos[19].nombreInterno, "P20");
   perifericos[0].alertaS1[0] = 1;
   perifericos[0].alertaS2[0] = 1;
 
+  tft.sendCommand(0x10);
+
   xTaskCreatePinnedToCore(
   simCode,
   "sim",
@@ -401,8 +398,30 @@ void loop() {
       indiceMensajesNRFTR ++;
   }
   lecturaEnergia();
+  if(tiempoDisplay >= 60000){
+    if(!displayModoSleep){
+      tft.sendCommand(0x10);
+      displayModoSleep = 1;
+    }
+  }
+  else{
+    if(displayModoSleep){
+      tft.sendCommand(0x11);
+      delay(120);
 
-  display();
+      tft.setCursor(10, 10);
+      tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+      tft.setTextSize(4);
+      tft.print("USUARIOS");
+      tft.setCursor(10, 70);
+      tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+      tft.setTextSize(4);
+      tft.print("PERIFERICOS");
+      TFT_DISPLAY = INICIO;
+      displayModoSleep = 0;
+    }
+    display();
+  }
 
   if(indiceMensajesNRF >= 1 && !mandandoSMS){
     if(timerNRF >= TIEMPO_ENVIAR_NRF){
@@ -853,6 +872,7 @@ void rotacionEncoder() {
     } else {
       valorEncoder++;
     }
+    tiempoDisplay = 0;
   }
 
   ultimoValorCLK = valorCLK;
@@ -863,10 +883,12 @@ void botonEncoder() {
   if (debounceSWEncoder >= TIEMPO_DEBOUNCE) {
     debounceSWEncoder = 0;
     flagSWEncoder = 1;
+    tiempoDisplay = 0;
   }
 }
 
 void IRAM_ATTR onTimer() {
+  tiempoDisplay += 1;
   tiempoPulsador += 1;
   tiempoDelay += 1;
   timerSMS += 1;

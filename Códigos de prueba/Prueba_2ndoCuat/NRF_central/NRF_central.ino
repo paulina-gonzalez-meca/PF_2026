@@ -31,7 +31,7 @@ char mensaje[] = "hola";
 hw_timer_t *timer = NULL;  // timer
 void IRAM_ATTR onTimer();  // function interrupts every 1ms
 
-RF24 radio(PIN_CE, PIN_CSN);
+RF24 radio(PIN_CE, PIN_CSN, 2000000);
 
 SPIClass hspi(HSPI);
 Adafruit_ILI9341 tft = Adafruit_ILI9341(&hspi, TFT_DC, TFT_CS);
@@ -60,11 +60,16 @@ void setup() {
   timer = timerBegin(1000000);  // 1 MHz = 1 µs
   timerAttachInterrupt(timer, &onTimer);
   timerAlarm(timer, 1000, true, 0);  // tick cada 1 ms
+  
+  // tft.sendCommand(0x10);
+  delay(120);
 }
 
 void loop() {
   if (tiempoS >= TIEMPO_S) {
     tft.fillScreen(ILI9341_BLACK);
+    // tft.sendCommand(0x10);
+    // delay(120);
     digitalWrite(PIN_BZZ, LOW);
     tiempoS = 0;
   }
@@ -81,6 +86,9 @@ void loop() {
     tiempoS = 0;
   }
   if (radio.available() > 0) {
+    
+  // tft.sendCommand(0x11);
+  delay(120);
     memset(mensajeRecibidoNRF, 0, sizeof(mensajeRecibidoNRF));
     radio.read(&mensajeRecibidoNRF, sizeof(mensajeRecibidoNRF));
     String mensajeCentralConectar = String(mensajeRecibidoNRF);

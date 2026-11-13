@@ -14,19 +14,23 @@ void setup() {
   radio.begin();
   radio.setAutoAck(true);
   radio.setChannel(108);
+  radio.enableDynamicPayloads();
+  radio.setDataRate(RF24_250KBPS);
   radio.openWritingPipe(direccionB);
   radio.openReadingPipe(1, direccionA);
-  radio.setPALevel(RF24_PA_MIN);
+  radio.setPALevel(RF24_PA_LOW);
   radio.startListening();
+  radio.setRetries(15, 15);
 }
 
 void loop() {
   if(Serial.available() > 0){
     message = Serial.readString();
+    message.trim();
     char messageBuffer[32];
     message.toCharArray(messageBuffer, sizeof(messageBuffer));
     radio.stopListening();
-    bool success = radio.write(&messageBuffer, sizeof(messageBuffer));
+    bool success = radio.write(messageBuffer, strlen(messageBuffer) + 1);
     if(success){
       Serial.println("success");
     }
@@ -37,7 +41,8 @@ void loop() {
   }
   if(radio.available() > 0){
     memset(receivedMessage, 0, sizeof(receivedMessage));
-    radio.read(&receivedMessage, sizeof(receivedMessage));
+    uint8_t len = radio.getDynamicPayloadSize();
+    radio.read(&receivedMessage, len);
     msg = String(receivedMessage);
     Serial.println("Message received:" + msg);
   }
