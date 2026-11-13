@@ -1,4 +1,3 @@
-#include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
 #include <stdint.h>
@@ -28,7 +27,8 @@ enum EstadoPeriferico {
 EstadoPeriferico estadoActual = CONFIGURACION;
 
 RF24 radio(PIN_CE, PIN_CSN);
-const uint64_t direccionConectar = 0xF0F0F0F0E0LL;
+const uint64_t direccionA = 0xF0F0F0F0E0LL;
+const uint64_t direccionB = 0xF0F0F0F0E1LL;
 
 char mensaje[10];
 char mensajeRecibidoNRF[32];
@@ -56,18 +56,19 @@ void setup() {
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED, HIGH);
 
-  if (!radio.begin()) {
+  /* if (!radio.begin()) {
     while (1) {
       digitalWrite(PIN_LED, !digitalRead(PIN_LED));
       delay(150);
     }
-  }
+  } */
 
-  radio.setChannel(CANAL_RADIO);
+  radio.begin();
+  radio.setAutoAck(true);
+  radio.setChannel(108);
+  radio.openReadingPipe(1, direccionA);
+  radio.openWritingPipe(direccionB);
   radio.setPALevel(RF24_PA_LOW);
-  radio.setDataRate(RF24_1MBPS);
-  radio.openWritingPipe(direccionConectar);
-  radio.openReadingPipe(0, direccionConectar);  // Pipe 0 evita duplicar dirección con Pipe 1
   radio.startListening();
 
   // Arma "#C,1,0*" sin usar snprintf

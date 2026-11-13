@@ -35,7 +35,7 @@ void setup() {
   radio.begin();
   radio.openWritingPipe(direccionConectar);
   radio.openReadingPipe(1, direccionConectar);
-  radio.setPALevel(RF24_PA_MAX);
+  radio.setPALevel(RF24_PA_LOW);
   radio.startListening();
   
   tft.begin();

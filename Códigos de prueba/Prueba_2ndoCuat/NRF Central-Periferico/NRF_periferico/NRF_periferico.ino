@@ -25,9 +25,10 @@ void setup() {
   //SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI);
 
   radio.begin();
+  digitalWrite(PIN_LED, HIGH);
   radio.openWritingPipe(direccionConectar);
   radio.openReadingPipe(1, direccionConectar);
-  radio.setPALevel(RF24_PA_MAX);
+  radio.setPALevel(RF24_PA_LOW);
   radio.startListening();
 
   pinMode(PIN_LED, OUTPUT);

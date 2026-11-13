@@ -51,7 +51,7 @@ volatile unsigned int tiempoConectar = 0;
 int tipoSensor1 = 0;
 int tipoSensor2 = 0;
 int indicePeriferico = 0;
-uint64_t direccionConectar = 0xF0F0F0F0E0LL;
+uint64_t direccionConectar = 0xF0F0F0F0E1LL;
 
 hw_timer_t *timer = NULL;  // timer
 void IRAM_ATTR onTimer();  // function interrupts every 1ms
@@ -65,8 +65,11 @@ void setup() {
   SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI);
 
   radio.begin();
-  radio.setChannel(76);
+  radio.setRetries(15, 15);  // 4000 µs entre reintentos x 15 = 60 ms de ventana para que el ATtiny escuche
+  radio.setChannel(108);
+  radio.setAutoAck(true);
   radio.openReadingPipe(1, direccionConectar);
+  radio.setCRCLength(RF24_CRC_16);
   radio.setPALevel(RF24_PA_LOW);
   radio.setDataRate(RF24_1MBPS);
   radio.startListening();

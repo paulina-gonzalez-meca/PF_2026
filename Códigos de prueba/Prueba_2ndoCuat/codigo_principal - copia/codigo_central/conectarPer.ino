@@ -3,7 +3,7 @@ bool conectar(String nombreConectar, volatile unsigned int &tiempoConectar){
   static char mensajeConectar[8];
   static char mensajeRecibidoNRF[32];
   switch(CONECTAR_CEN){
-    case ESPERA:
+    case ESPERA:s
       if(mensajeRecibidoConectar){
         if(isDigit(tramaConectar.charAt(tramaConectar.indexOf(',') + 1))){
           perifericos[indicePerifericos].tipoSensor1 = String(tramaConectar.charAt(tramaConectar.indexOf(',') + 1)).toInt();
