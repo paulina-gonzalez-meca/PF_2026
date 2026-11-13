@@ -4,9 +4,9 @@
 
 #define TIEMPO_CONECTAR 2000
 #define TIMEOUT_CONECTAR 10000
-#define PIN_CE /*PIN_PA3*/4
-#define PIN_CSN /*PIN_PA7*/5
-#define PIN_LED /*PIN_PB1*/2
+#define PIN_CE PIN_PA3///4
+#define PIN_CSN PIN_PA7//5
+#define PIN_LED PIN_PB1//2
 
 unsigned long tiempoActual = 0;
 unsigned long tiempoAnterior = 0;

@@ -3,6 +3,7 @@
 
 #define TIEMPO_CONECTAR 2000
 #define TIMEOUT_CONECTAR 10000
+#define TIEMPO_ENVIO_DATOS 5000
 // #P1,BAT,VALORSENSOR,VALORSENSOR2*
 
 // pines para probar en esp32:
@@ -33,8 +34,8 @@ char mensaje[8];
 char mensajeRecibidoNRF[32];
 char trama[32];
 
-unsigned long tiempoActual = 0;
-unsigned long tiempoAnterior = 0;
+unsigned long tiempoInicio = 0;
+unsigned long ultimoEnvio = 0;
 
 // datos que se le enviarán al central
 int tipoSensor1 = 1;
@@ -61,12 +62,14 @@ void setup() {
   radio.begin();
   radio.openWritingPipe(direccionConectar);
   radio.openReadingPipe(1, direccionConectar);
-  radio.setPALevel(RF24_PA_MAX);
+  radio.setPALevel(RF24_PA_LOW);  // Sube a RF24_PA_MAX solo cuando tengas capacitor en VCC/GND
+  radio.setDataRate(RF24_1MBPS);
   radio.startListening();
-  digitalWrite(PIN_LED, LOW);
 
-   tiempoAnterior = millis();
   snprintf(mensaje, sizeof(mensaje), "#C,%d,%d*", tipoSensor1, tipoSensor2);
+  digitalWrite(PIN_LED, LOW);
+  tiempoInicio = millis();
+  ultimoEnvio = tiempoInicio - TIEMPO_CONECTAR;
 }
 
 void loop() {
@@ -75,8 +78,6 @@ void loop() {
   tempTermistor = leerTemperaturaTermistor();
   puerta = lecturaPuerta();
   porcentajeBateria = lecturaBaterias();
-
-
 }
 
 float leerTemperaturaTermistor() {
@@ -113,55 +114,58 @@ float lecturaBaterias() {
   float bateriaPin = bateriaAnalog * (3 / 1023.0);
   float bateria = (bateriaPin / 0.54) * 3;
   // lo pasé a porcentaje
-  float bateriaPorcentaje = (bateria/3) * 100;
+  float bateriaPorcentaje = (bateria / 3) * 100;
   return bateriaPorcentaje;
   //para ponerlo en el char
   //dtostrf(bateria, 4, 2, nivelBateria);  // float, minimo, decimales, char en donde se guarda
 }
 
 void configuracion() {
- tiempoActual = millis();
-  if (tiempoActual - tiempoAnterior >= TIMEOUT_CONECTAR) {
-  digitalWrite(PIN_LED, HIGH);
+
+  unsigned long tiempoActual = millis();
+
+  if (tiempoActual - tiempoInicio < TIMEOUT_CONECTAR) {
+    digitalWrite(PIN_LED, HIGH);
     if (conectar(mensaje, direccionConectar)) {
-      Serial.println("conectado");
-      Serial.print(nombre[0]);
-      Serial.print(nombre[1]);
-      Serial.println(nombre[2]);
-      tiempoAnterior = tiempoActual;
+
+      digitalWrite(PIN_LED, LOW);
     }
   } else {
     digitalWrite(PIN_LED, LOW);
-      tiempoAnterior = tiempoActual;
-    Serial.println("timeout");
+    tiempoInicio = millis();
   }
-
 }
 
 bool conectar(char mensajeConectar[], uint64_t direccion) {
-  if ((tiempoActual - tiempoAnterior) % TIEMPO_CONECTAR == 0) {
+  unsigned long ahora = millis();
+
+  if (ahora - ultimoEnvio >= TIEMPO_CONECTAR) {
+    ultimoEnvio = ahora;
     radio.stopListening();
     radio.openWritingPipe(direccion);
     radio.write(mensajeConectar, strlen(mensajeConectar) + 1);
-    Serial.print(mensajeConectar);
     radio.startListening();
   }
-  if (radio.available() > 0) {
-    memset(mensajeRecibidoNRF, 0, sizeof(mensajeRecibidoNRF));
-    radio.read(&mensajeRecibidoNRF, sizeof(mensajeRecibidoNRF));
-    String mensajeCentralConectar = String(mensajeRecibidoNRF);
-    Serial.println(mensajeCentralConectar);
-    mensajeCentralConectar.trim();
 
-    nombre[0] = 'P';
-    if (mensajeCentralConectar.startsWith("#C,P") && mensajeCentralConectar.endsWith("*")) {
-      if (isDigit(mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf('P') + 1))) {
-        nombre[1] = mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf('P') + 1);
-        if (mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf('P') + 2) != '*') {
-          if (isDigit(mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf('P') + 2))) {
-            nombre[2] = mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf('P') + 2);
-          }
-        }
+  if (radio.available()) {
+    memset(mensajeRecibidoNRF, 0, sizeof(mensajeRecibidoNRF));
+    radio.read(&mensajeRecibidoNRF, sizeof(mensajeRecibidoNRF) - 1);
+
+    // Validación directa sin while: acepta "#C,P<1 dígito>*" o "#C,P<2 dígitos>*"
+    if (strncmp(mensajeRecibidoNRF, "#C,P", 4) == 0 && isDigit(mensajeRecibidoNRF[4])) {
+      bool formatoValido = false;
+      memset(nombre, 0, sizeof(nombre));
+      nombre[0] = 'P';
+      nombre[1] = mensajeRecibidoNRF[4];
+
+      if (mensajeRecibidoNRF[5] == '*') {
+        formatoValido = true;
+      } else if (isDigit(mensajeRecibidoNRF[5]) && mensajeRecibidoNRF[6] == '*') {
+        nombre[2] = mensajeRecibidoNRF[5];
+        formatoValido = true;
+      }
+
+      if (formatoValido) {
         radio.stopListening();
         radio.openWritingPipe(direccion);
         radio.write("OK", 3);
@@ -170,5 +174,6 @@ bool conectar(char mensajeConectar[], uint64_t direccion) {
       }
     }
   }
+
   return false;
 }
