@@ -1,4 +1,21 @@
 void display() {
+  // if(perifericos[0].emergenciaS1 > 0 || perifericos[0].emergenciaS2 > 0 || perifericos[1].emergenciaS1 > 0 || perifericos[1].emergenciaS2 > 0 || perifericos[2].emergenciaS1 > 0 || perifericos[2].emergenciaS2 > 0 || perifericos[3].emergenciaS1 > 0 || perifericos[3].emergenciaS2 > 0 || perifericos[4].emergenciaS1 > 0 || perifericos[4].emergenciaS2 > 0){
+  //   if(!emergenciaDisplay){
+  //     TFT_DISPLAY = EMERGENCIA;
+  //     emergenciaDisplay = 1;
+  //   }
+  // }
+  // if(perifericos[5].emergenciaS1 > 0 || perifericos[5].emergenciaS2 > 0 || perifericos[6].emergenciaS1 > 0 || perifericos[6].emergenciaS2 > 0 || perifericos[7].emergenciaS1 > 0 || perifericos[7].emergenciaS2 > 0 || perifericos[8].emergenciaS1 > 0 || perifericos[8].emergenciaS2 > 0 || perifericos[9].emergenciaS1 > 0 || perifericos[9].emergenciaS2 > 0){
+  //   if(!emergenciaDisplay){
+  //     TFT_DISPLAY = EMERGENCIA;
+  //     emergenciaDisplay = 1;
+  //   }
+  // }
+  // else{
+  //   if(emergenciaDisplay){
+  //     emergenciaDisplay = 0;
+  //   }
+  // }
   switch (TFT_DISPLAY) {
     case INICIO:
       if (flagSWEncoder) {

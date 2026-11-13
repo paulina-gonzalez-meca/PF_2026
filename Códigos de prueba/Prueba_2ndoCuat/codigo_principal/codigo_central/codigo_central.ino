@@ -100,17 +100,18 @@ public:
 const uint64_t direccionA = 0xF0F0F0F0E0LL;
 const uint64_t direccionB = 0xF0F0F0F0E1LL;
 
-RF24 radio(PIN_CE, PIN_CSN, 2000000);
+RF24 radio(PIN_CE, PIN_CSN, 8000000);
 
 char letras[27] = { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
 char numeros[11] = { "1234567890" };
 volatile int valorEncoder = 0;
 int ultimoValorCLK = 0;
 int ultimoValorDT = 0;
-volatile int debounceSWEncoder = 0;
-volatile int tiempoAgregarPer = 0;
-volatile int parpadeo = 0;
-volatile unsigned int tiempoConectar = 0;
+volatile unsigned long debounceSWEncoder = 0;
+volatile unsigned long tiempoAgregarPer = 0;
+volatile unsigned long parpadeo = 0;
+volatile unsigned long tiempoConectar = 0;
+volatile unsigned long tiempoComandoMandado = 0;
 int valorDisplay = 1;
 int modificarUsuario = 0;
 int modificarPer = 0;
@@ -129,6 +130,7 @@ bool mensajeRecibidoConectar = 0;
 bool mensajeRecibidoOK = 0;
 bool conectando = 0;
 bool displayModoSleep = 1;
+bool comandoMandadoSleep = 0;
 int cicloNRF = 0;
 int emgMandarSMS = 0;
 int indicePerSMS = 0;
@@ -304,7 +306,7 @@ void setup() {
   radio.startListening();
   
   Serial.begin(9600);
-  tft.begin(8000000);
+  tft.begin(1000000);
   tft.setRotation(3);
   tft.fillScreen(ILI9341_BLACK);
 
@@ -402,23 +404,28 @@ void loop() {
     if(!displayModoSleep){
       tft.sendCommand(0x10);
       displayModoSleep = 1;
+      comandoMandadoSleep = 0;
     }
   }
   else{
     if(displayModoSleep){
-      tft.sendCommand(0x11);
-      delay(120);
-
-      tft.setCursor(10, 10);
-      tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-      tft.setTextSize(4);
-      tft.print("USUARIOS");
-      tft.setCursor(10, 70);
-      tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-      tft.setTextSize(4);
-      tft.print("PERIFERICOS");
-      TFT_DISPLAY = INICIO;
-      displayModoSleep = 0;
+      if(!comandoMandadoSleep){
+        tft.sendCommand(0x11);
+        comandoMandadoSleep = 1;
+        tiempoComandoMandado = 0;
+      }
+      if(tiempoComandoMandado >= 120){
+        tft.setCursor(10, 10);
+        tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+        tft.setTextSize(4);
+        tft.print("USUARIOS");
+        tft.setCursor(10, 70);
+        tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
+        tft.setTextSize(4);
+        tft.print("PERIFERICOS");
+        TFT_DISPLAY = INICIO;
+        displayModoSleep = 0;
+      }
     }
     display();
   }
@@ -905,4 +912,5 @@ void IRAM_ATTR onTimer() {
   parpadeo += 1;
   tiempoConectar += 1;
   tiempoSenal += 1;
+  tiempoComandoMandado += 1;
 }

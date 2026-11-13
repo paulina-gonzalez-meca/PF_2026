@@ -1,4 +1,4 @@
-bool conectar(String nombreConectar, volatile unsigned int &tiempoConectar){
+bool conectar(String nombreConectar, volatile unsigned long &tiempoConectar){
   conectando = 1;
   static char mensajeConectar[8];
   static char mensajeRecibidoNRF[32];

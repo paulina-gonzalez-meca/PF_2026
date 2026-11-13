@@ -21,9 +21,6 @@ void recibirNRF(){
     }
     if(trama.startsWith("#P") && trama.endsWith("*")){
       Serial.println(trama);
-      digitalWrite(PIN_BUZZER, HIGH);
-      delay(500);
-      digitalWrite(PIN_BUZZER, LOW);
       if(indiceMensajesNRFTR < TAM_TR){
         mensajesNRFTR[indiceMensajesNRFTR] = trama;
         indiceMensajesNRFTR ++;
