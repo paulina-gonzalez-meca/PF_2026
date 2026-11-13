@@ -16,7 +16,8 @@ int tipoSensor1 = 1;
 int tipoSensor2 = 0;
 char mensaje[8];
 char mensajeRecibidoNRF[32];
-uint64_t direccionConectar = 0xF0F0F0F0E0LL;
+const uint64_t direccionA = 0xF0F0F0F0E0LL;
+const uint64_t direccionB = 0xF0F0F0F0E1LL;
 char nombre[4];
 
 hw_timer_t *timer = NULL;  // timer
@@ -30,7 +31,9 @@ void setup() {
    Serial.println("SPI");
 
   radio.begin();
-  radio.openReadingPipe(1, direccionConectar);
+  radio.setChannel(108);
+  radio.openReadingPipe(1, direccionA);
+    radio.openWritingPipe(direccionB);
   radio.setPALevel(RF24_PA_MAX);
   radio.startListening();
   Serial.println("inicializado");
@@ -44,7 +47,7 @@ void setup() {
 
 void loop() {
   if(tiempoConectar <= TIMEOUT_CONECTAR){
-    if(conectar(mensaje, direccionConectar)){
+    if(conectar(mensaje)){
       Serial.println("conectado");
       Serial.print(nombre[0]);
       Serial.print(nombre[1]);
@@ -57,10 +60,10 @@ void loop() {
     tiempoConectar = 0;
   }
 }
-bool conectar(char mensajeConectar[], uint64_t direccion){
+bool conectar(char mensajeConectar[]){
   if(tiempoConectar%TIEMPO_CONECTAR == 0){
+    Serial.println(String(mensajeConectar));
     radio.stopListening();
-    radio.openWritingPipe(direccion);
     radio.write(mensajeConectar, strlen(mensajeConectar) + 1);
     radio.startListening();
   }
@@ -81,7 +84,6 @@ bool conectar(char mensajeConectar[], uint64_t direccion){
           }
         }
         radio.stopListening();
-        radio.openWritingPipe(direccion);
         radio.write("OK", 3);
         radio.startListening();
         return true;

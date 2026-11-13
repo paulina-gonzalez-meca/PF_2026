@@ -1,6 +1,8 @@
 bool mandarSMS(String mensaje, String numero){
   switch(PSMS){
     case PASO1:
+      digitalWrite(PIN_DTR, LOW);
+      vTaskDelay(pdMS_TO_TICKS(100));
       sim800l.println("AT+CMGS=\"" + numero + "\"");
       tiempoDelay = 0;
       PSMS = PASO2;
@@ -20,6 +22,7 @@ bool mandarSMS(String mensaje, String numero){
         tiempoDelay = 0;
         timerSMS = 0;
         PSMS = PASO1;
+        digitalWrite(PIN_DTR, HIGH);
         return true;
       }
       return false;

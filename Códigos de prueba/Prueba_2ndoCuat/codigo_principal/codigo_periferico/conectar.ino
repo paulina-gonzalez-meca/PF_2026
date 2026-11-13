@@ -1,4 +1,4 @@
-bool conectar(char mensajeConectar[], uint64_t direccion) {
+bool conectar(char mensajeConectar[]) {
   if ((tiempoConeccion - tiempoConeccionAnterior) % TIEMPO_CONECTAR == 0) {
     Serial.print(".");
     Serial.print(String(mensajeConectar));
@@ -11,7 +11,6 @@ bool conectar(char mensajeConectar[], uint64_t direccion) {
     radio.read(&mensajeRecibidoNRF, sizeof(mensajeRecibidoNRF));
     String mensajeCentralConectar = String(mensajeRecibidoNRF);
     mensajeCentralConectar.trim();
-    Serial.print("b");
     nombre[0] = 'P';
     if (mensajeCentralConectar.startsWith("#C,P") && mensajeCentralConectar.endsWith("*")) {
       Serial.println(mensajeCentralConectar);
@@ -23,7 +22,6 @@ bool conectar(char mensajeConectar[], uint64_t direccion) {
           }
         }
         radio.stopListening();
-        radio.openWritingPipe(direccion);
         radio.write("OK", 3);
         radio.startListening();
         return true;

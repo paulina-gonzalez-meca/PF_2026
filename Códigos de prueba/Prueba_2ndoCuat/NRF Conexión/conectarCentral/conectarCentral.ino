@@ -65,9 +65,12 @@ void setup() {
   SPI.begin(PIN_SCK, PIN_MISO, PIN_MOSI);
 
   radio.begin();
+  radio.setChannel(76);
   radio.openReadingPipe(1, direccionConectar);
-  radio.setPALevel(RF24_PA_MAX);
+  radio.setPALevel(RF24_PA_LOW);
+  radio.setDataRate(RF24_1MBPS);
   radio.startListening();
+  Serial.println("NRF conectada");
 
   timer = timerBegin(1000000);  // 1 MHz = 1 µs
   timerAttachInterrupt(timer, &onTimer);
@@ -75,38 +78,37 @@ void setup() {
 }
 
 void loop() {
-  if(indicePeriferico < 20){
-    if(tiempoConectar <= TIMEOUT_CONECTAR){
-      if(conectar(indicePeriferico, direccionConectar, tiempoConectar)){
+  if (indicePeriferico < 20) {
+    if (tiempoConectar <= TIMEOUT_CONECTAR) {
+      if (conectar(indicePeriferico, direccionConectar, tiempoConectar)) {
         Serial.println("conectado");
         Serial.println(String(tipoSensor1));
         Serial.println(String(tipoSensor2));
         indicePeriferico += 1;
         tiempoConectar = 0;
       }
-    }
-    else{
+    } else {
       Serial.println("timeout");
       tiempoConectar = 0;
     }
   }
 }
-bool conectar(int nombreConectar, uint64_t direccion, volatile unsigned int &tiempoConectar){
+bool conectar(int nombreConectar, uint64_t direccion, volatile unsigned int &tiempoConectar) {
   static char mensajeConectar[8];
   static char mensajeRecibidoNRF[32];
-  switch(CONECTAR_CEN){
+  switch (CONECTAR_CEN) {
     case ESPERA:
-      if(radio.available() > 0){
+      if (radio.available() > 0) {
         memset(mensajeRecibidoNRF, 0, sizeof(mensajeRecibidoNRF));
         radio.read(&mensajeRecibidoNRF, sizeof(mensajeRecibidoNRF));
         String mensajeCentralConectar = String(mensajeRecibidoNRF);
         mensajeCentralConectar.trim();
         Serial.println(mensajeCentralConectar);
 
-        if(mensajeCentralConectar.startsWith("#C,") && mensajeCentralConectar.endsWith("*")){
-          if(isDigit(mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf(',') + 1))){
+        if (mensajeCentralConectar.startsWith("#C,") && mensajeCentralConectar.endsWith("*")) {
+          if (isDigit(mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf(',') + 1))) {
             tipoSensor1 = String(mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf(',') + 1)).toInt();
-            if(isDigit(mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf(',') + 3))){
+            if (isDigit(mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf(',') + 3))) {
               tipoSensor2 = String(mensajeCentralConectar.charAt(mensajeCentralConectar.indexOf(',') + 3)).toInt();
               memset(mensajeConectar, 0, sizeof(mensajeConectar));
               snprintf(mensajeConectar, sizeof(mensajeConectar), "#C,P%d*", (nombreConectar + 1));
@@ -115,29 +117,29 @@ bool conectar(int nombreConectar, uint64_t direccion, volatile unsigned int &tie
           }
         }
       }
-      return false; 
+      return false;
       break;
     case ENVIO_CONECTAR:
-      if(tiempoConectar % TIEMPO_CONECTAR_PER == 0){
+      if (tiempoConectar % TIEMPO_CONECTAR_PER == 0) {
         radio.stopListening();
         radio.openWritingPipe(direccion);
         radio.write(mensajeConectar, strlen(mensajeConectar) + 1);
         Serial.println(String(mensajeConectar));
         radio.startListening();
       }
-      if(radio.available() > 0){
+      if (radio.available() > 0) {
         memset(mensajeRecibidoNRF, 0, sizeof(mensajeRecibidoNRF));
         radio.read(&mensajeRecibidoNRF, sizeof(mensajeRecibidoNRF));
         String mensajeCentralConectar = String(mensajeRecibidoNRF);
         mensajeCentralConectar.trim();
         Serial.println(mensajeCentralConectar);
 
-        if(mensajeCentralConectar == "OK"){
+        if (mensajeCentralConectar == "OK") {
           CONECTAR_CEN = ESPERA;
           return true;
         }
       }
-      return false; 
+      return false;
       break;
   }
 }

@@ -12,6 +12,7 @@ void decodificador(){
     }
     switch(PDECO){
       case APD:
+      if(ind < indicePerifericos){
         if(String(perifericos[ind].nombreInterno) == tramaProceso.substring(1, tramaProceso.indexOf(","))){
           tramaProceso.remove(0, tramaProceso.indexOf(",")+1);
           String tempStr = "#";
@@ -28,6 +29,10 @@ void decodificador(){
             eliminarTR = 1;
           }
         }
+      }
+      else{
+        eliminarTR = 1;
+      }
       break;
       case BAT:
       if(isDigit(tramaProceso.charAt(0))){
