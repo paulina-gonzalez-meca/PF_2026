@@ -195,7 +195,7 @@ void manejoMandarSMS(){
           if (indiceNum < indiceUsuario) {
             mandandoSMS = 1;
             if(gestionRecibir == 1){
-              if(mandarSMS("Menu:\n> /status", usuario[indiceNum].numeroUs)){
+              if(mandarSMS("Menu:\n> /status\n> /Nombre:(4 caracteres)\n> /valorUmbral\n> /UmbralMin:\n> /UmbralMax:\n> /Numero:", usuario[indiceNum].numeroUs)){
                 indiceNum += 1;
               }
             }
@@ -207,6 +207,18 @@ void manejoMandarSMS(){
               }
             }
             else if(gestionRecibir == 3){
+              if(mandarSMS("Cambio exitoso", usuario[indiceNum].numeroUs)){
+                indiceNum += 1;
+              }
+            }
+            else if(gestionRecibir == 4){
+              char buf[160];
+              sprintf(buf, "Umbrales:\nUmbral minimo:%d\nUmbral maximo:%d", perifericos[0].umbralMinS1, perifericos[0].umbralMaxS1);
+              if(mandarSMS(buf, usuario[indiceNum].numeroUs)){
+                indiceNum += 1;
+              }
+            }
+            else if(gestionRecibir == 5){
               if(mandarSMS("Error", usuario[indiceNum].numeroUs)){
                 indiceNum += 1;
               }

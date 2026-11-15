@@ -106,13 +106,19 @@ void switchUmbral(int tipoSns, String lectura, int umbralMaximo, int umbralMinim
       }
       break;
     case 2:
-      if(isDigit(lectura.charAt(0))){
-        if(lectura.toInt() == 0){
-          emg = 0;
-        }
-        else if(lectura.toInt() == 1){
-          emg = 1;
-        }
+      // if(isDigit(lectura.charAt(0))){
+      //   if(lectura.toInt() == 0){
+      //     emg = 0;
+      //   }
+      //   else if(lectura.toInt() == 1){
+      //     emg = 1;
+      //   }
+      // }
+      if(lectura == "Abierto"){
+        emg = 1;
+      }
+      else if(lectura == "Cerrado"){
+        emg = 0;
       }
       else{
         emg = 0;

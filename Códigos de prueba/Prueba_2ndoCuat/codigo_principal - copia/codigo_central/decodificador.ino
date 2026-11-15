@@ -90,7 +90,19 @@ void decodificador(){
             PDECO = RSLT_S2;
           }
         }
-        else{
+        // else{
+        //   if(tramaProceso[0] == '-' && tramaProceso[1] == ','){
+        //     perifericos[ind].lecturaSensor1 = "-";
+        //     tramaProceso.remove(0, tramaProceso.indexOf(',')+1);
+        //     PDECO = RSLT_S2;
+        //   }
+        //   else{
+        //     perifericos[ind].lecturaSensor1 = tramaProceso.substring(0, tramaProceso.indexOf(','));
+        //     tramaProceso.remove(0, tramaProceso.indexOf(',')+1);
+        //     PDECO = RSLT_S2;
+        //   }
+        // }
+        else if(perifericos[ind].tipoSensor1 == 1){
           if(tramaProceso[0] == '-' && tramaProceso[1] == ','){
             perifericos[ind].lecturaSensor1 = "-";
             tramaProceso.remove(0, tramaProceso.indexOf(',')+1);
@@ -100,6 +112,32 @@ void decodificador(){
             perifericos[ind].lecturaSensor1 = tramaProceso.substring(0, tramaProceso.indexOf(','));
             tramaProceso.remove(0, tramaProceso.indexOf(',')+1);
             PDECO = RSLT_S2;
+          }
+        }
+        else if(perifericos[ind].tipoSensor1 == 2){
+          if(tramaProceso[0] == '-' && tramaProceso[1] == ','){
+            perifericos[ind].lecturaSensor1 = "-";
+            tramaProceso.remove(0, tramaProceso.indexOf(',')+1);
+            PDECO = RSLT_S2;
+          }
+          else{
+            if(isDigit(tramaProceso.charAt(0))){
+              if(tramaProceso.charAt(0) == '1'){
+                perifericos[ind].lecturaSensor1 = "Abierto";
+                tramaProceso.remove(0, tramaProceso.indexOf(',')+1);
+                PDECO = RSLT_S2;
+              }
+              else{
+                perifericos[ind].lecturaSensor1 = "Cerrado";
+                tramaProceso.remove(0, tramaProceso.indexOf(',')+1);
+                PDECO = RSLT_S2;
+              }
+            }
+            else{
+              perifericos[ind].lecturaSensor1 = tramaProceso.substring(0, tramaProceso.indexOf(','));
+              tramaProceso.remove(0, tramaProceso.indexOf(',')+1);
+              PDECO = RSLT_S2;
+            }
           }
         }
       break;
@@ -120,7 +158,23 @@ void decodificador(){
             PDECO = APD;
           }
         }
-        else{
+        // else{
+        //   if(tramaProceso[0] == '-' && tramaProceso[1] == '*'){
+        //     perifericos[ind].lecturaSensor2 = "-";
+        //     tramaProceso.remove(0, tramaProceso.indexOf('*')+1);
+        //     eliminarTR = 1;
+        //     ind = 0;
+        //     PDECO = APD;
+        //   }
+        //   else{
+        //     perifericos[ind].lecturaSensor2 = tramaProceso.substring(0, tramaProceso.indexOf('*'));
+        //     tramaProceso.remove(0, tramaProceso.indexOf('*')+1);
+        //     eliminarTR = 1;
+        //     ind = 0;
+        //     PDECO = APD;
+        //   }
+        // }
+        else if(perifericos[ind].tipoSensor2 == 1){
           if(tramaProceso[0] == '-' && tramaProceso[1] == '*'){
             perifericos[ind].lecturaSensor2 = "-";
             tramaProceso.remove(0, tramaProceso.indexOf('*')+1);
@@ -134,6 +188,40 @@ void decodificador(){
             eliminarTR = 1;
             ind = 0;
             PDECO = APD;
+          }
+        }
+        else if(perifericos[ind].tipoSensor2 == 2){
+          if(tramaProceso[0] == '-' && tramaProceso[1] == '*'){
+            perifericos[ind].lecturaSensor2 = "-";
+            tramaProceso.remove(0, tramaProceso.indexOf('*')+1);
+            eliminarTR = 1;
+            ind = 0;
+            PDECO = APD;
+          }
+          else{
+            if(isDigit(tramaProceso.charAt(0))){
+              if(tramaProceso.charAt(0) == '1'){
+                perifericos[ind].lecturaSensor2 = "Abierto";
+                tramaProceso.remove(0, tramaProceso.indexOf('*')+1);
+                eliminarTR = 1;
+                ind = 0;
+                PDECO = APD;
+              }
+              else{
+                perifericos[ind].lecturaSensor2 = "Cerrado";
+                tramaProceso.remove(0, tramaProceso.indexOf('*')+1);
+                eliminarTR = 1;
+                ind = 0;
+                PDECO = APD;
+              }
+            }
+            else{
+              perifericos[ind].lecturaSensor2 = tramaProceso.substring(0, tramaProceso.indexOf('*'));
+              tramaProceso.remove(0, tramaProceso.indexOf('*')+1);
+              eliminarTR = 1;
+              ind = 0;
+              PDECO = APD;
+            }
           }
         }
       break;

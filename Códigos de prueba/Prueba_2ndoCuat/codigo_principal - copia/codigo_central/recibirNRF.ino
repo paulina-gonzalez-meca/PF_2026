@@ -2,10 +2,6 @@ void recibirNRF(){
   if(radio.available() > 0){
     memset(mensajeRecibidoNRF, 0, sizeof(mensajeRecibidoNRF));
     uint8_t len = radio.getDynamicPayloadSize();
-    if (len < 1 || len >= sizeof(mensajeRecibidoNRF)) {
-      radio.flush_rx();
-      return;
-    }
     radio.read(&mensajeRecibidoNRF, len);
     trama = String(mensajeRecibidoNRF);
     trama.trim();

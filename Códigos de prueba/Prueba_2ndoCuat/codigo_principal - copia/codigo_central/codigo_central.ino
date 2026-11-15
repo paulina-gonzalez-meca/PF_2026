@@ -102,6 +102,10 @@ const uint64_t direccionB = 0xF0F0F0F0E1LL;
 
 RF24 radio(PIN_CE, PIN_CSN, 2000000);
 
+String mensajeRecibidoNumMin = "";
+String mensajeRecibidoNumMax = "";
+int indiceEsNumMin = 0;
+int indiceEsNumMax = 0;
 String simBuffer = "";
 bool esperarSiguiente = 0;
 int gestionRecibir = 0;
@@ -114,7 +118,6 @@ volatile int debounceSWEncoder = 0;
 volatile int tiempoAgregarPer = 0;
 volatile int parpadeo = 0;
 volatile unsigned int tiempoConectar = 0;
-int valorDisplay = 1;
 int modificarUsuario = 0;
 int modificarPer = 0;
 int eliminar = 0;
@@ -131,7 +134,6 @@ bool flagMensajePulsador = 0;
 bool mensajeRecibidoConectar = 0;
 bool mensajeRecibidoOK = 0;
 bool conectando = 0;
-bool displayModoSleep = 1;
 int cicloNRF = 0;
 int emgMandarSMS = 0;
 int indicePerSMS = 0;
@@ -139,7 +141,6 @@ bool flagMensajeCorte = 0;
 volatile int tiempoDelay = 0;
 unsigned long inicio = 0;
 bool flagSenial = 0;
-volatile long tiempoDisplay = 60000;
 volatile long timerSMS = 0;
 volatile long timerNRF = 0;
 volatile long timerEng = 0;
@@ -186,36 +187,6 @@ typedef enum {  // state machine
   ENVIO_CONECTAR
 } PASOS_CONECTAR_t;
 PASOS_CONECTAR_t CONECTAR_CEN;
-
-typedef enum {  // state machine
-  INICIO,
-  USUARIO,
-  EDITAR_US,
-  EDITAR_NOMBRE_US,
-  EDITAR_NUM_US,
-  AGREGAR_NOMBRE_US,
-  AGREGAR_NUM_US,
-  PERIFERICO,
-  MOSTRAR_PER,
-  EDITAR_PER,
-  EDITAR_NOMBRE_PER,
-  EDITAR_NOMBRES1_PER,
-  EDITAR_ALERTAS1_PER,
-  EDITAR_UMBRALS1_PER,
-  EDITAR_UMBRALMAXS1_PER,
-  EDITAR_UMBRALMINS1_PER,
-  EDITAR_NOMBRES2_PER,
-  EDITAR_ALERTAS2_PER,
-  EDITAR_UMBRALS2_PER,
-  EDITAR_UMBRALMINS2_PER,
-  EDITAR_UMBRALMAXS2_PER,
-  ELIMINAR_PER,
-  AGREGAR_PER,
-  AGREGAR_PER_NOMBRE,
-  AGREGAR_PER_NS1,
-  AGREGAR_PER_NS2
-} PASOS_DISPLAY_t;
-PASOS_DISPLAY_t TFT_DISPLAY;
 
 typedef enum {
   PASO1,
@@ -273,22 +244,17 @@ void IRAM_ATTR onTimer();  // function interrupts every 1ms
 void IRAM_ATTR rotacionEncoder();
 void IRAM_ATTR botonEncoder();
 
-int displayLetras(char nombre[], int &indiceNombre);
-int displayNum(char numero[], int &indiceNumero);
 void gestionarComandosGSM();
-SPIClass hspi(HSPI);
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 
 void setup() {
-  hspi.begin(NRF_CLK, NRF_MISO, NRF_MOSI, PIN_CSN);
-  SPI.begin(TFT_CLK, TFT_MISO, TFT_MOSI, TFT_CS);
+  SPI.begin(NRF_CLK, NRF_MISO, NRF_MOSI);
 
   pinMode(PIN_RST, OUTPUT);  // Pin Reset es output
   pinMode(PIN_DTR, OUTPUT);
   digitalWrite(PIN_DTR, LOW);
   digitalWrite(PIN_RST, HIGH);  // Pin reset high está desactivado
 
-  SerialBT.begin("Central_Dev");  // Nombre del dispositivo Bluetooth
+  // SerialBT.begin("Central_Dev");  // Nombre del dispositivo Bluetooth
   sim800l.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
 
   strcpy(usuario[indiceUsuario].numeroUs, "+5491161386381");
@@ -296,7 +262,7 @@ void setup() {
 
   pinMode(PIN_ENERGIA, INPUT_PULLUP);
   pinMode(PIN_BUZZER, OUTPUT);
-  radio.begin(&hspi);
+  radio.begin();
   radio.setAutoAck(true);
   radio.setChannel(108);
   radio.enableDynamicPayloads();
@@ -307,21 +273,14 @@ void setup() {
   radio.startListening();
   
   Serial.begin(9600);
-  tft.begin(8000000);
-  tft.setRotation(3);
-  tft.fillScreen(ILI9341_BLACK);
 
   pinMode(ENCODER_A_PIN, INPUT);
   pinMode(ENCODER_B_PIN, INPUT);
   pinMode(ENCODER_SW_PIN, INPUT);
-  // pinMode(TFT_BL, OUTPUT);
-
-  // digitalWrite(TFT_BL, HIGH);
 
   attachInterrupt(digitalPinToInterrupt(ENCODER_A_PIN), rotacionEncoder, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ENCODER_SW_PIN), botonEncoder, FALLING);
 
-  TFT_DISPLAY = INICIO;
   PSMS = PASO1;
   PDECO = APD;
   PRST = RST;
@@ -380,8 +339,6 @@ strcpy(perifericos[19].nombreInterno, "P20");
   perifericos[0].alertaS1[0] = 1;
   perifericos[0].alertaS2[0] = 1;
 
-  tft.sendCommand(0x10);
-
   xTaskCreatePinnedToCore(
   simCode,
   "sim",
@@ -394,6 +351,30 @@ strcpy(perifericos[19].nombreInterno, "P20");
 }
 
 void loop() {
+  if(mensajeRecibidoNumMax != ""){
+    if(esNum(mensajeRecibidoNumMax, indiceEsNumMax, perifericos[0].umbralMaxS1)){
+      if(mensajeRecibidoNumMax.toInt() > perifericos[0].umbralMinS1){
+        perifericos[0].umbralMaxS1 = mensajeRecibidoNumMax.toInt();
+        gestionRecibir = 3;
+      }
+      else{
+        gestionRecibir = 5;
+      }
+      mensajeRecibidoNumMax = "";
+    }
+  }
+  else if(mensajeRecibidoNumMin != ""){
+    if(esNum(mensajeRecibidoNumMin, indiceEsNumMin, perifericos[0].umbralMinS1)){
+      if(mensajeRecibidoNumMin.toInt() < perifericos[0].umbralMaxS1){
+        perifericos[0].umbralMinS1 = mensajeRecibidoNumMin.toInt();
+        gestionRecibir = 3;
+      }
+      else{
+        gestionRecibir = 5;
+      }
+      mensajeRecibidoNumMin = "";
+    }
+  }
   if (SerialBT.available()) {
     String incomingMessage = SerialBT.readStringUntil('\n');
     incomingMessage.trim();
@@ -401,30 +382,6 @@ void loop() {
       indiceMensajesNRFTR ++;
   }
   lecturaEnergia();
-  if(tiempoDisplay >= 60000){
-    if(!displayModoSleep){
-      tft.sendCommand(0x10);
-      displayModoSleep = 1;
-    }
-  }
-  else{
-    if(displayModoSleep){
-      tft.sendCommand(0x11);
-      delay(120);
-
-      tft.setCursor(10, 10);
-      tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-      tft.setTextSize(4);
-      tft.print("USUARIOS");
-      tft.setCursor(10, 70);
-      tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
-      tft.setTextSize(4);
-      tft.print("PERIFERICOS");
-      TFT_DISPLAY = INICIO;
-      displayModoSleep = 0;
-    }
-    display();
-  }
 
   if(indiceMensajesNRF >= 1 && !mandandoSMS){
     if(timerNRF >= TIEMPO_ENVIAR_NRF){
@@ -879,7 +836,6 @@ void rotacionEncoder() {
     } else {
       valorEncoder++;
     }
-    tiempoDisplay = 0;
   }
 
   ultimoValorCLK = valorCLK;
@@ -890,12 +846,10 @@ void botonEncoder() {
   if (debounceSWEncoder >= TIEMPO_DEBOUNCE) {
     debounceSWEncoder = 0;
     flagSWEncoder = 1;
-    tiempoDisplay = 0;
   }
 }
 
 void IRAM_ATTR onTimer() {
-  tiempoDisplay += 1;
   tiempoPulsador += 1;
   tiempoDelay += 1;
   timerSMS += 1;
