@@ -2,7 +2,7 @@
 #include <RF24.h>
 #include <stdint.h>
 
-#define CANAL_RADIO 76           // <-- PON AQUÍ EL MISMO CANAL QUE EN EL ESP32 (76 por defecto o 108)
+#define CANAL_RADIO 108  
 #define TIEMPO_CONECTAR 2000
 #define TIMEOUT_CONECTAR 10000
 #define TIEMPO_ENVIO_DATOS 60000  // Envía telemetría cada 1 minuto
@@ -50,6 +50,11 @@ bool estadoPuerta = CERRADO;
 bool ultimaLecturaPuerta = CERRADO;
 unsigned long ultimoTiempoDebounce = 0;
 
+bool flagSW = 0;
+bool coneccion = 0;
+bool flagConectado = 0;
+
+
 void setup() {
   pinMode(PIN_PUERTA, INPUT_PULLUP);
   pinMode(PIN_PULSADOR, INPUT_PULLUP);
@@ -87,6 +92,8 @@ void setup() {
 }
 
 void loop() {
+
+
   tempTermistor = leerTemperaturaTermistor();
   puerta = lecturaPuerta();
   porcentajeBateria = lecturaBaterias();
@@ -95,7 +102,7 @@ void loop() {
     configuracion();
   } else {
     enviarDatosCentral();
-    recibirDatosCentral();
+
   }
 }
 
@@ -104,7 +111,7 @@ void configuracion() {
 
   if (tiempoActual - tiempoInicio < TIMEOUT_CONECTAR) {
     digitalWrite(PIN_LED, HIGH);
-    if (conectar(mensaje, direccionConectar)) {
+    if (conectar(mensaje, direccionA)) {
       digitalWrite(PIN_LED, LOW);
       ultimoEnvioDatos = millis() - TIEMPO_ENVIO_DATOS;  // Primer envío inmediato
       estadoActual = OPERANDO;
@@ -191,40 +198,28 @@ void enviarDatosCentral() {
     // Parpadeo breve de confirmación visual al transmitir
     digitalWrite(PIN_LED, HIGH);
     radio.stopListening();
-    radio.openWritingPipe(direccionConectar);
+    radio.openWritingPipe(direccionA);
     radio.write(trama, strlen(trama) + 1);
     radio.startListening();
     digitalWrite(PIN_LED, LOW);
   }
 }
 
-void recibirDatosCentral() {
-  if (!radio.available()) {
-    return;
-  }
-
-  memset(mensajeRecibidoNRF, 0, sizeof(mensajeRecibidoNRF));
-  radio.read(&mensajeRecibidoNRF, sizeof(mensajeRecibidoNRF) - 1);
-
-  size_t lenNombre = strlen(nombre);
-  size_t lenMsg = strlen(mensajeRecibidoNRF);
-
-  if (lenMsg > lenNombre + 3 &&
-      mensajeRecibidoNRF[0] == '#' &&
-      strncmp(&mensajeRecibidoNRF[1], nombre, lenNombre) == 0 &&
-      mensajeRecibidoNRF[lenNombre + 1] == ',' &&
-      mensajeRecibidoNRF[lenMsg - 1] == '*') {
-
-    const char* comando = &mensajeRecibidoNRF[lenNombre + 2];
-
-    if (strncmp(comando, "REQ*", 4) == 0) {
-      ultimoEnvioDatos = millis() - TIEMPO_ENVIO_DATOS;
-    } else if (strncmp(comando, "LED,1*", 6) == 0) {
-      digitalWrite(PIN_LED, HIGH);
-    } else if (strncmp(comando, "LED,0*", 6) == 0) {
-      digitalWrite(PIN_LED, LOW);
+void recibirNRF(){
+  /* if(radio.available() > 0){
+    memset(mensajeRecibidoNRF, 0, sizeof(mensajeRecibidoNRF));
+    radio.read(&mensajeRecibidoNRF, sizeof(mensajeRecibidoNRF));
+    trama = String(mensajeRecibidoNRF);
+    trama.trim();
+    String tramaTemp = "#";
+    tramaTemp += String(nombre);
+    tramaTemp += ",recibido*";
+    if(trama == tramaTemp){
+      Serial.println(trama);
+      respuestaNRF = 1;
     }
-  }
+    trama = "";
+  } */
 }
 
 float leerTemperaturaTermistor() {
