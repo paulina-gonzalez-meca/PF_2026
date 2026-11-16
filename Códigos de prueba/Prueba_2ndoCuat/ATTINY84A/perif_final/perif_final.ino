@@ -708,7 +708,7 @@ bool lecturaPuerta() {
 
 
 int lecturaBaterias() {
-
-  int bateriaPorcentaje(analogRead(PIN_ENERGIA) / 1023 * 100);
+  int lecturaPin = analogRead(PIN_ENERGIA);
+  int bateriaPorcentaje = map(lecturaPin, 0, 1023, 0, 100);
   return bateriaPorcentaje;
 }
