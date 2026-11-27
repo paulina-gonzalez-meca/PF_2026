@@ -213,7 +213,7 @@ typedef enum {  // state machine
 } PASOS_CONECTAR_t;
 PASOS_CONECTAR_t CONECTAR_CEN;
 
-typedef enum {  // state machine
+typedef enum {
   INICIO,
   USUARIO,
   EDITAR_US,
